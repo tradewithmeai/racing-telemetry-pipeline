@@ -196,6 +196,7 @@ def run_pipeline(
     event_name: str = "barber_r1",
     data_path: Path = Path("data/processed"),
     output_event_name: str = "barber_r1_pipeline",
+    skip_validation: bool = False,
 ):
     """Run complete end-to-end pipeline for multiple cars.
 
@@ -204,6 +205,7 @@ def run_pipeline(
         event_name: Input event name
         data_path: Path to processed data directory
         output_event_name: Output event name for results
+        skip_validation: Skip validation stage (GX 1.x has API compatibility issues)
     """
     logger.info("\n" + "="*60)
     logger.info("FULL PIPELINE: END-TO-END PROCESSING")
@@ -311,17 +313,27 @@ def run_pipeline(
     save_resample_stats(resample_stats, output_path, output_event_name)
     save_sync_stats(sync_stats_obj, coverage_by_car, output_path, output_event_name)
 
-    # Stage 7: Validation
-    logger.info(f"\n{'#'*60}")
-    logger.info("# STAGE 7: VALIDATION")
-    logger.info(f"{'#'*60}\n")
+    # Stage 7: Validation (optional)
+    validation_result = None
+    if not skip_validation:
+        logger.info(f"\n{'#'*60}")
+        logger.info("# STAGE 7: VALIDATION")
+        logger.info(f"{'#'*60}\n")
 
-    validation_result = validate_simulation_ready(
-        df=df_sync,
-        context_root=Path("great_expectations"),
-        event_name=output_event_name,
-        output_dir=Path("data/reports"),
-    )
+        try:
+            validation_result = validate_simulation_ready(
+                df=df_sync,
+                context_root=Path("great_expectations"),
+                event_name=output_event_name,
+                output_dir=Path("data/reports"),
+            )
+        except Exception as e:
+            logger.warning(f"⚠️  Validation failed: {e}")
+            logger.warning("   Continuing without validation (use --skip-validation to suppress this warning)")
+    else:
+        logger.info(f"\n{'#'*60}")
+        logger.info("# STAGE 7: VALIDATION (SKIPPED)")
+        logger.info(f"{'#'*60}\n")
 
     # Final summary
     logger.info(f"\n{'='*60}")
@@ -329,10 +341,12 @@ def run_pipeline(
     logger.info("="*60)
     logger.info(f"✅ Processed {len(dfs_resampled)} cars")
     logger.info(f"✅ Generated {len(df_sync):,} synchronized frames")
-    logger.info(f"✅ Validation: {validation_result.pass_rate:.1f}% pass rate")
+    if validation_result:
+        logger.info(f"✅ Validation: {validation_result.pass_rate:.1f}% pass rate")
     logger.info(f"\nOutputs:")
     logger.info(f"  Synchronized data: {output_file}")
-    logger.info(f"  Validation report: {validation_result.report_path}")
+    if validation_result:
+        logger.info(f"  Validation report: {validation_result.report_path}")
     logger.info(f"  Statistics:")
     logger.info(f"    - Pivot: {output_path / output_event_name / 'pivot_stats.parquet'}")
     logger.info(f"    - Resample: {output_path / output_event_name / 'resample_stats.parquet'}")
@@ -370,6 +384,12 @@ def main():
         help='Path to processed data directory (default: data/processed)',
     )
 
+    parser.add_argument(
+        '--skip-validation',
+        action='store_true',
+        help='Skip validation stage (recommended until GX 1.x API issues are resolved)',
+    )
+
     args = parser.parse_args()
 
     # Run pipeline
@@ -378,6 +398,7 @@ def main():
         event_name=args.event,
         data_path=args.data_path,
         output_event_name=args.output,
+        skip_validation=args.skip_validation,
     )
 
 

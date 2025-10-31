@@ -196,7 +196,7 @@ def build_simulation_ready_suite(policy: Dict, context: Optional[Any] = None) ->
         "time_global",
         "chassis_id",
         "car_no",
-        "lap",
+        "lap_repaired",  # Note: using lap_repaired from pipeline
         "speed",
         "Steering_Angle",
         "aps",
