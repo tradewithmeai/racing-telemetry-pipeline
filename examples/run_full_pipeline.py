@@ -93,7 +93,7 @@ def apply_time_sync(df: pd.DataFrame, chassis_id: str) -> pd.DataFrame:
     """Apply time synchronization (drift correction).
 
     Args:
-        df: Raw telemetry DataFrame
+        df: Raw telemetry DataFrame with timestamp and meta_time columns
         chassis_id: Vehicle identifier
 
     Returns:
@@ -106,16 +106,18 @@ def apply_time_sync(df: pd.DataFrame, chassis_id: str) -> pd.DataFrame:
     if not pd.api.types.is_datetime64_any_dtype(df['timestamp']):
         df['timestamp'] = pd.to_datetime(df['timestamp'])
 
+    if not pd.api.types.is_datetime64_any_dtype(df['meta_time']):
+        df['meta_time'] = pd.to_datetime(df['meta_time'])
+
     # Sort by timestamp
     df = df.sort_values('timestamp').reset_index(drop=True)
 
-    # Compute drift calibration
+    # Compute drift calibration (expects df with timestamp and meta_time columns)
     calibrations = windowed_drift_calibration(
         df=df,
         chassis_id=chassis_id,
-        time_col='timestamp',
-        reference_col='meta_time',
         window_minutes=5,
+        method='median',
     )
 
     logger.info(f"  Calibrated {len(calibrations)} time windows")
@@ -124,8 +126,6 @@ def apply_time_sync(df: pd.DataFrame, chassis_id: str) -> pd.DataFrame:
     df_corrected = apply_drift_correction(
         df=df,
         calibrations=calibrations,
-        chassis_id=chassis_id,
-        time_col='timestamp',
     )
 
     logger.info(f"  Applied drift correction to {len(df_corrected):,} rows")
@@ -133,12 +133,13 @@ def apply_time_sync(df: pd.DataFrame, chassis_id: str) -> pd.DataFrame:
     return df_corrected
 
 
-def apply_lap_repair(df: pd.DataFrame, chassis_id: str) -> pd.DataFrame:
+def apply_lap_repair(df: pd.DataFrame, chassis_id: str, event: str = "barber") -> pd.DataFrame:
     """Apply lap repair (detect boundaries, assign lap numbers).
 
     Args:
         df: Time-corrected telemetry DataFrame
         chassis_id: Vehicle identifier
+        event: Event name (e.g., 'barber')
 
     Returns:
         DataFrame with lap_repaired column
@@ -150,9 +151,10 @@ def apply_lap_repair(df: pd.DataFrame, chassis_id: str) -> pd.DataFrame:
     df_repaired, boundaries = repair_laps(
         df=df,
         chassis_id=chassis_id,
-        time_col='time_corrected',
-        lap_col='lap',
-        event_name='barber',
+        event=event,
+        track_length_m=3700.0,
+        min_lap_duration_sec=85.0,
+        max_lap_duration_sec=300.0,
     )
 
     logger.info(f"  Detected {len(boundaries)} lap boundaries")
