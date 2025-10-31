@@ -20,22 +20,27 @@ logger = get_logger("test_pivot")
 
 
 def load_refined_data(data_path: Path, chassis_id: str) -> pd.DataFrame:
-    """Load refined (time-corrected, lap-repaired) data for a single chassis.
+    """Load raw curated data for a single chassis.
+
+    Note: This loads from raw_curated (ingestion output) without time correction,
+    lap repair, or position normalization. For fully processed data, use
+    run_full_pipeline.py instead.
 
     Args:
         data_path: Path to processed data directory
         chassis_id: Chassis ID to load
 
     Returns:
-        DataFrame with refined telemetry data (long format)
+        DataFrame with raw telemetry data (long format)
     """
-    # Look for refined parquet files
-    parquet_pattern = f"barber_r1/chassis_id={chassis_id}/segment_id=*/telemetry_name=*/*.parquet"
-    parquet_files = list(data_path.glob(parquet_pattern))
+    # Look for raw_curated parquet files (correct path)
+    base_path = data_path / "barber_r1" / "raw_curated" / "event=barber_r1"
+    parquet_pattern = f"chassis_id={chassis_id}/telemetry_name=*/*.parquet"
+    parquet_files = list(base_path.glob(parquet_pattern))
 
     if not parquet_files:
         raise FileNotFoundError(
-            f"No parquet files found for chassis {chassis_id} in {data_path}"
+            f"No parquet files found for chassis {chassis_id} at {base_path / parquet_pattern}"
         )
 
     logger.info(f"Found {len(parquet_files)} parquet files for chassis {chassis_id}")
@@ -50,6 +55,19 @@ def load_refined_data(data_path: Path, chassis_id: str) -> pd.DataFrame:
     df = pd.concat(dfs, ignore_index=True)
 
     logger.info(f"Loaded {len(df):,} rows for chassis {chassis_id}")
+
+    # Add placeholder columns if they don't exist (for testing pivot without full pipeline)
+    if 'time_corrected' not in df.columns:
+        logger.warning("time_corrected not found, using timestamp")
+        df['time_corrected'] = pd.to_datetime(df['timestamp'])
+
+    if 'lap_repaired' not in df.columns:
+        logger.warning("lap_repaired not found, using lap")
+        df['lap_repaired'] = df.get('lap', 1)
+
+    if 'segment_id' not in df.columns:
+        logger.warning("segment_id not found, setting to 0")
+        df['segment_id'] = 0
 
     return df
 

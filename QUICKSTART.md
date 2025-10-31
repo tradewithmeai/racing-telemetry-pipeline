@@ -64,7 +64,45 @@ ls -lh data/raw/
 
 ---
 
-## Step 3: Run Stage-by-Stage Pipeline
+## Step 3: Run the Complete Pipeline (RECOMMENDED)
+
+### Option A: Integrated Pipeline (Fast & Easy)
+
+The **recommended way** to process your data is using the integrated pipeline that runs all stages in sequence:
+
+```bash
+# Run complete pipeline on 2 cars
+python examples/run_full_pipeline.py --chassis 010 002
+
+# Or process all 20 cars
+python examples/run_full_pipeline.py --chassis 010 002 004 006 013 015 016 022 025 026 030 033 036 038 040 047 049 060 063 065
+
+# With custom output name
+python examples/run_full_pipeline.py --chassis 010 002 --output my_race_data
+```
+
+**What it does:**
+1. Loads raw curated data (from ingestion)
+2. Applies time synchronization (fixes backwards timestamps)
+3. Repairs lap numbers (detects boundaries)
+4. Normalizes position data (GPS + track distance)
+5. Pivots to wide format (each signal as column)
+6. Resamples to uniform 20Hz grid
+7. Synchronizes all cars to global timeline
+8. Validates final output
+
+**Output:**
+- `data/processed/barber_r1_pipeline/synchronized/multi_car_frames.parquet` - **Main output!**
+- `data/processed/barber_r1_pipeline/sync_stats.parquet` - Statistics
+- `data/reports/barber_r1_pipeline/validation_simulation_ready.json` - Validation report
+
+**Processing time:** ~30-60 seconds for 2 cars
+
+---
+
+## Step 4: Run Stage-by-Stage (For Testing Individual Components)
+
+If you want to test individual pipeline stages separately:
 
 ### Stage 0: Ingestion (Already Tested ✅)
 
@@ -144,9 +182,10 @@ python test_position_normalization.py
 
 ---
 
-### Stage 4: Pivot Transformation (NEW)
+### Stage 4: Pivot Transformation
 
-Now let's run the new stages we just built:
+⚠️ **Note**: This stage test loads raw data WITHOUT time correction, lap repair, or position normalization.
+For properly processed data, use `run_full_pipeline.py` instead (see Step 3).
 
 ```bash
 python examples/test_pivot.py
@@ -166,9 +205,10 @@ python examples/test_pivot.py
 
 ---
 
-### Stage 5: Resample to 20Hz Grid
+### Stages 5-7: Resample, Sync, Validate
 
-Create a test script to run resampling:
+⚠️ **Note**: These stages are integrated into `run_full_pipeline.py`.
+Run the complete pipeline (Step 3) instead of running these individually.
 
 ```bash
 # Create test script
@@ -333,100 +373,17 @@ python examples/test_validation.py
 
 ---
 
-## Step 4: Complete End-to-End Test
+## Step 5: View Your Results
 
-Run all stages on a subset of cars:
+After running the pipeline, examine the synchronized data:
 
-```bash
-# Create complete pipeline test
-cat > test_complete_pipeline.py << 'EOF'
-import sys
-from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent))
-
-import pandas as pd
-from src.transform import (
-    pivot_to_wide_format,
-    resample_to_time_grid,
-    synchronize_multi_car,
-    save_synchronized_data,
-)
-from src.validation import validate_simulation_ready
-from src.utils.logging_utils import get_logger
-
-logger = get_logger("complete_pipeline")
-
-# Test with 2 cars
-chassis_ids = ["010", "002"]
-data_path = Path("data/processed")
-event_name = "barber_r1_complete"
-
-# Load refined data (time-corrected, lap-repaired, position-normalized)
-dfs_by_car = {}
-
-for chassis_id in chassis_ids:
-    logger.info(f"\n{'='*60}")
-    logger.info(f"Processing {chassis_id}")
-    logger.info(f"{'='*60}")
-
-    # Load refined data (you'll need to point to actual processed data)
-    parquet_files = list(data_path.glob(f"barber_r1/chassis_id={chassis_id}/segment_id=*/telemetry_name=*/*.parquet"))
-
-    if not parquet_files:
-        logger.error(f"No data found for {chassis_id}")
-        continue
-
-    df_long = pd.concat([pd.read_parquet(f) for f in parquet_files], ignore_index=True)
-    logger.info(f"Loaded {len(df_long):,} rows (long format)")
-
-    # PIVOT
-    df_wide, _ = pivot_to_wide_format(df_long, chassis_id)
-    logger.info(f"Pivoted to {len(df_wide):,} rows (wide format)")
-
-    # RESAMPLE
-    df_resampled, _ = resample_to_time_grid(df_wide, chassis_id)
-    logger.info(f"Resampled to {len(df_resampled):,} rows at 20Hz")
-
-    dfs_by_car[chassis_id] = df_resampled
-
-# SYNCHRONIZE
-df_sync, sync_stats, coverage = synchronize_multi_car(dfs_by_car, event_name)
-logger.info(f"\n✅ Synchronized {len(dfs_by_car)} cars: {len(df_sync):,} total rows")
-
-# SAVE
-output_file = save_synchronized_data(df_sync, data_path, event_name)
-logger.info(f"✅ Saved to: {output_file}")
-
-# VALIDATE
-result = validate_simulation_ready(
-    df=df_sync,
-    context_root=Path("great_expectations"),
-    event_name=event_name,
-    output_dir=Path("data/reports"),
-)
-
-logger.info(f"\n{'='*60}")
-logger.info(f"PIPELINE COMPLETE")
-logger.info(f"{'='*60}")
-logger.info(f"Pass rate: {result.pass_rate:.1f}%")
-logger.info(f"Report: {result.report_path}")
-EOF
-
-# Run complete pipeline
-python test_complete_pipeline.py
-```
-
----
-
-## Step 5: Check Outputs
-
-### View Synchronized Data
+### Load and Inspect Data
 
 ```python
 import pandas as pd
 
-# Load synchronized multi-car data
-df = pd.read_parquet("data/processed/barber_r1_complete/synchronized/multi_car_frames.parquet")
+# Load synchronized multi-car data (from run_full_pipeline.py output)
+df = pd.read_parquet("data/processed/barber_r1_pipeline/synchronized/multi_car_frames.parquet")
 
 print(f"Total rows: {len(df):,}")
 print(f"Columns: {list(df.columns)}")
@@ -448,12 +405,12 @@ print(df.groupby('chassis_id')['speed'].count())
 import pandas as pd
 
 # Sync stats
-sync_stats = pd.read_parquet("data/processed/barber_r1_complete/sync_stats.parquet")
+sync_stats = pd.read_parquet("data/processed/barber_r1_pipeline/sync_stats.parquet")
 print("Sync Statistics:")
 print(sync_stats)
 
 # Per-car coverage
-coverage = pd.read_parquet("data/processed/barber_r1_complete/car_coverage.parquet")
+coverage = pd.read_parquet("data/processed/barber_r1_pipeline/car_coverage.parquet")
 print("\nPer-car Coverage:")
 print(coverage)
 ```
