@@ -10,7 +10,10 @@
       "Bash(cat:*)",
       "Bash(gh:*)",
       "Bash(git init:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nInitial commit: Racing telemetry validation pipeline\n\nProduction-ready GPU-accelerated pipeline for processing multi-GB racing \ntelemetry datasets into synchronized, validated simulation-ready data.\n\nFeatures:\n- GPU acceleration with RAPIDS cuDF (auto CPU fallback)\n- Time synchronization (99.999% backwards timestamp elimination)\n- Deterministic lap boundary detection\n- GPS/track position normalization\n- Multi-car global time alignment and resampling\n- Great Expectations validation suite\n- Comprehensive logging and audit trails\n\nPipeline stages:\n1. Ingestion: Chunked CSV reading with anomaly detection\n2. Time correction: Drift calibration and step detection\n3. Lap repair: Deterministic boundary detection\n4. Position normalization: GPS minutes to degrees\n5. Pivot: Long format to wide format transformation\n6. Resample: Uniform 20Hz time grid per car\n7. Synchronization: Multi-car global time alignment\n8. Validation: Quality checks at each stage\n\nTested on Barber Motorsports Park R1 data (11.5M rows, 20 cars).\nEOF\n)\")",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []

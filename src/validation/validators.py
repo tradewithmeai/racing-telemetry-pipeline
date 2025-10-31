@@ -178,8 +178,11 @@ def validate_raw_curated(
     logger.info("VALIDATION: RAW_CURATED")
     logger.info("="*60)
 
+    # Create ephemeral context for GX 1.x
+    context = gx.get_context(mode="ephemeral")
+
     # Build expectation suite
-    suite = build_expectation_suite(ExpectationLevel.RAW_CURATED)
+    suite = build_expectation_suite(ExpectationLevel.RAW_CURATED, context=context)
 
     # Run validation
     success, results = run_validation(
@@ -242,8 +245,11 @@ def validate_refined(
     logger.info("VALIDATION: REFINED")
     logger.info("="*60)
 
+    # Create ephemeral context for GX 1.x
+    context = gx.get_context(mode="ephemeral")
+
     # Build expectation suite
-    suite = build_expectation_suite(ExpectationLevel.REFINED)
+    suite = build_expectation_suite(ExpectationLevel.REFINED, context=context)
 
     # Run validation
     success, results = run_validation(
@@ -306,8 +312,11 @@ def validate_simulation_ready(
     logger.info("VALIDATION: SIMULATION_READY")
     logger.info("="*60)
 
+    # Create ephemeral context for GX 1.x
+    context = gx.get_context(mode="ephemeral")
+
     # Build expectation suite
-    suite = build_expectation_suite(ExpectationLevel.SIMULATION_READY)
+    suite = build_expectation_suite(ExpectationLevel.SIMULATION_READY, context=context)
 
     # Run validation
     success, results = run_validation(

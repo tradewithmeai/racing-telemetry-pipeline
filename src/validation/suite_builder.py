@@ -1,7 +1,7 @@
 """Build Great Expectations expectation suites for telemetry data."""
 
 import great_expectations as gx
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 from enum import Enum
 from pathlib import Path
 import yaml
@@ -33,7 +33,7 @@ def load_validation_policy() -> Dict:
     return policy
 
 
-def build_raw_curated_suite(policy: Dict) -> gx.core.ExpectationSuite:
+def build_raw_curated_suite(policy: Dict, context: Optional[Any] = None) -> gx.core.ExpectationSuite:
     """Build expectation suite for raw_curated data layer.
 
     This validates data immediately after ingestion:
@@ -44,13 +44,19 @@ def build_raw_curated_suite(policy: Dict) -> gx.core.ExpectationSuite:
 
     Args:
         policy: Validation policy dict
+        context: Optional GX context (required for GX 1.x)
 
     Returns:
         ExpectationSuite for raw_curated layer
     """
     logger.info("Building expectation suite: RAW_CURATED")
 
-    suite = gx.core.ExpectationSuite(name="raw_curated")
+    # For GX 1.x, we need a context to create suites
+    if context is None:
+        # Create a minimal in-memory context
+        context = gx.get_context(mode="ephemeral")
+
+    suite = context.suites.add(gx.core.ExpectationSuite(name="raw_curated"))
 
     # Required columns
     required_columns = [
@@ -92,7 +98,7 @@ def build_raw_curated_suite(policy: Dict) -> gx.core.ExpectationSuite:
     return suite
 
 
-def build_refined_suite(policy: Dict) -> gx.core.ExpectationSuite:
+def build_refined_suite(policy: Dict, context: Optional[Any] = None) -> gx.core.ExpectationSuite:
     """Build expectation suite for refined data layer.
 
     This validates data after transformations:
@@ -104,13 +110,18 @@ def build_refined_suite(policy: Dict) -> gx.core.ExpectationSuite:
 
     Args:
         policy: Validation policy dict
+        context: Optional GX context (required for GX 1.x)
 
     Returns:
         ExpectationSuite for refined layer
     """
     logger.info("Building expectation suite: REFINED")
 
-    suite = gx.core.ExpectationSuite(name="refined")
+    # For GX 1.x, we need a context to create suites
+    if context is None:
+        context = gx.get_context(mode="ephemeral")
+
+    suite = context.suites.add(gx.core.ExpectationSuite(name="refined"))
 
     # Required columns
     refined_columns = [
@@ -156,7 +167,7 @@ def build_refined_suite(policy: Dict) -> gx.core.ExpectationSuite:
     return suite
 
 
-def build_simulation_ready_suite(policy: Dict) -> gx.core.ExpectationSuite:
+def build_simulation_ready_suite(policy: Dict, context: Optional[Any] = None) -> gx.core.ExpectationSuite:
     """Build expectation suite for simulation-ready data.
 
     This validates final wide-format synchronized data:
@@ -167,13 +178,18 @@ def build_simulation_ready_suite(policy: Dict) -> gx.core.ExpectationSuite:
 
     Args:
         policy: Validation policy dict
+        context: Optional GX context (required for GX 1.x)
 
     Returns:
         ExpectationSuite for simulation_ready layer
     """
     logger.info("Building expectation suite: SIMULATION_READY")
 
-    suite = gx.core.ExpectationSuite(name="simulation_ready")
+    # For GX 1.x, we need a context to create suites
+    if context is None:
+        context = gx.get_context(mode="ephemeral")
+
+    suite = context.suites.add(gx.core.ExpectationSuite(name="simulation_ready"))
 
     # Required columns (wide format)
     required_sim_columns = [
@@ -244,13 +260,16 @@ def build_simulation_ready_suite(policy: Dict) -> gx.core.ExpectationSuite:
 
 
 def build_expectation_suite(
-    level: ExpectationLevel, policy: Optional[Dict] = None
+    level: ExpectationLevel,
+    policy: Optional[Dict] = None,
+    context: Optional[Any] = None
 ) -> gx.core.ExpectationSuite:
     """Build expectation suite for specified validation level.
 
     Args:
         level: Validation level (RAW_CURATED, REFINED, SIMULATION_READY)
         policy: Optional validation policy dict (loaded from YAML if None)
+        context: Optional GX context (required for GX 1.x)
 
     Returns:
         ExpectationSuite for the specified level
@@ -259,10 +278,10 @@ def build_expectation_suite(
         policy = load_validation_policy()
 
     if level == ExpectationLevel.RAW_CURATED:
-        return build_raw_curated_suite(policy)
+        return build_raw_curated_suite(policy, context)
     elif level == ExpectationLevel.REFINED:
-        return build_refined_suite(policy)
+        return build_refined_suite(policy, context)
     elif level == ExpectationLevel.SIMULATION_READY:
-        return build_simulation_ready_suite(policy)
+        return build_simulation_ready_suite(policy, context)
     else:
         raise ValueError(f"Unknown expectation level: {level}")
