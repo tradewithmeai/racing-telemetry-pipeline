@@ -1,0 +1,20 @@
+IMPORTANT: Place your track image here!
+
+Filename: track.png (or track.jpg)
+
+Requirements:
+- Overhead/satellite view of Barber Motorsports Park
+- PNG or JPG format
+- Recommended size: 1920x1080 or larger
+- Should show the full track layout
+
+The coordinate transformer will automatically map GPS coordinates from the telemetry
+data to pixel positions on this image.
+
+You can find satellite imagery from:
+- Google Maps (screenshot)
+- Google Earth
+- Racing circuit official websites
+- iRacing track maps
+
+Once you have the image, rename it to "track.png" and place it in this directory.
