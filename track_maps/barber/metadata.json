@@ -1,0 +1,26 @@
+{
+  "track_name": "Barber Motorsports Park",
+  "track_length_m": 3700.0,
+  "location": "Leeds, Alabama, USA",
+  "gps_bounds": {
+    "lat_min": 33.50,
+    "lat_max": 33.60,
+    "lon_min": -86.65,
+    "lon_max": -86.55
+  },
+  "start_finish_gps": {
+    "lat": 33.5543,
+    "lon": -86.6197
+  },
+  "map_image_path": "track_maps/barber/map.svg",
+  "map_width_px": null,
+  "map_height_px": null,
+  "reference_lap_time_sec": 95.0,
+  "metadata": {
+    "turns": 17,
+    "configuration": "road_course",
+    "direction": "clockwise",
+    "elevation_change_m": 80,
+    "notes": "Technical road course with significant elevation changes. Popular for GR Cup series."
+  }
+}

@@ -1,0 +1,76 @@
+# Validation Policy Configuration
+# Defines FAIL vs WARN thresholds for data quality checks
+
+schema:
+  require_all_columns: true
+
+signal_ranges:
+  speed:
+    min_value: 0.0
+    max_value: null  # No upper limit
+    unit: "m/s"
+    severity_below_min: "fail"
+    severity_above_max: "warn"
+
+  aps:
+    min_value: 0.0
+    max_value: 1.0
+    unit: "0-1 normalized"
+    severity_below_min: "fail"
+    severity_above_max: "fail"
+
+  gear:
+    min_value: -1  # Reverse
+    max_value: 10
+    severity_below_min: "fail"
+    severity_above_max: "fail"
+
+  pbrake_f:
+    min_value: 0.0
+    max_value: null
+    severity_below_min: "fail"
+
+  pbrake_r:
+    min_value: 0.0
+    max_value: null
+    severity_below_min: "fail"
+
+  nmot:
+    min_value: 0.0
+    max_value: 9000.0  # RPM limit
+    severity_below_min: "warn"
+    severity_above_max: "warn"
+
+nan_thresholds:
+  critical_signals_warn_pct: 1.0  # Warn if >1% NaN
+  critical_signals_fail_pct: 5.0  # Fail if >5% NaN
+
+critical_signals:
+  - speed
+  - Steering_Angle
+  - aps
+  - gear
+  - lap
+
+time_drift:
+  warn_std_sec: 10.0
+  fail_std_sec: 30.0
+
+time_gaps:
+  warn_sec: 0.5
+  fail_sec: 2.0
+
+position:
+  missing_data_fail_pct: 10.0  # Fail if >10% missing
+  gps_jump_threshold_m: 500.0  # Fail if GPS jumps >500m
+
+multi_car:
+  min_cars_for_simulation: 3  # Fail if <3 cars
+
+lap:
+  invalid_sentinel: 32768
+  invalid_post_repair_fail_pct: 10.0
+
+time_monotonicity:
+  require_monotonic: true
+  backwards_time_action: "fail"

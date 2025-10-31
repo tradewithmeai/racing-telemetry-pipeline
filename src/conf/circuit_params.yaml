@@ -1,0 +1,40 @@
+# Circuit/Track Parameters
+# Track-specific configuration for lap repair and position validation
+
+barber:
+  full_name: "Barber Motorsports Park"
+  location: "Leeds, Alabama, USA"
+  track_length_m: 3700.0
+  reference_lap_time_sec: 95.0  # Typical GR Cup lap time
+  min_lap_time_sec: 85.0  # Minimum plausible lap (qualifying pace)
+  max_lap_time_sec: 180.0  # Maximum plausible lap (with issues/caution)
+
+  gps_bounds:
+    lat_min: 33.50
+    lat_max: 33.60
+    lon_min: -86.65
+    lon_max: -86.55
+
+  start_finish:
+    latitude: 33.5543
+    longitude: -86.6197
+
+  turns: 17
+  configuration: "road_course"
+
+# Template for adding new circuits
+# circuit_name:
+#   full_name: "Circuit Full Name"
+#   location: "City, State/Country"
+#   track_length_m: 0000.0
+#   reference_lap_time_sec: 00.0
+#   min_lap_time_sec: 00.0
+#   max_lap_time_sec: 000.0
+#   gps_bounds:
+#     lat_min: 0.0
+#     lat_max: 0.0
+#     lon_min: 0.0
+#     lon_max: 0.0
+#   start_finish:
+#     latitude: 0.0
+#     longitude: 0.0

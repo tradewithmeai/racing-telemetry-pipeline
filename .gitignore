@@ -1,0 +1,77 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+
+# Linting
+.ruff_cache/
+.mypy_cache/
+.dmypy.json
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Data files (large)
+data/raw/*.csv
+data/processed/**/*.parquet
+data/simulation/**/*.parquet
+*.parquet
+*.csv
+
+# Logs
+logs/*.log
+logs/*.json
+
+# Great Expectations
+great_expectations/uncommitted/
+great_expectations/checkpoints/
+great_expectations/.ge_store_backend_id
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Keep structure but ignore contents
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/simulation/.gitkeep
+!data/reports/.gitkeep
+!logs/.gitkeep

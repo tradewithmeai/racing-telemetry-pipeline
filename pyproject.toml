@@ -1,0 +1,82 @@
+[project]
+name = "telemetry-processor"
+version = "0.1.0"
+description = "GPU-accelerated racing telemetry processor with validation and multi-car synchronization"
+requires-python = ">=3.10"
+dependencies = [
+    # Data processing
+    "polars[gpu]>=0.20.0",
+    "pandas>=2.0.0",
+    "pyarrow>=14.0.0",
+    "numpy>=1.24.0",
+
+    # Validation & Quality
+    "great-expectations>=0.18.0",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+
+    # Orchestration
+    "prefect>=2.14.0",
+
+    # Geospatial (for GPS handling)
+    "geopandas>=0.14.0",
+    "shapely>=2.0.0",
+
+    # Serialization & Performance
+    "orjson>=3.9.0",
+
+    # Utilities
+    "python-dateutil>=2.8.0",
+    "tqdm>=4.65.0",
+    "loguru>=0.7.0",
+]
+
+[project.optional-dependencies]
+gpu = [
+    "cudf-cu11>=23.12.0",
+    "dask-cudf-cu11>=23.12.0",
+    "rmm-cu11>=23.12.0",
+]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.7.0",
+    "ipython>=8.12.0",
+    "jupyter>=1.0.0",
+]
+all = [
+    "telemetry-processor[gpu,dev]",
+]
+
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["src"]
+
+[tool.black]
+line-length = 100
+target-version = ["py310", "py311"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+select = ["E", "F", "W", "I", "N", "UP"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+check_untyped_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+addopts = "-v --cov=src --cov-report=term-missing --cov-report=html"
