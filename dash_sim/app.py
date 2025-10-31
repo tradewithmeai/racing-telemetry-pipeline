@@ -48,7 +48,7 @@ def create_initial_figure():
     # Add track background image
     fig.add_layout_image(
         dict(
-            source=f"/{config.TRACK_IMAGE.name}",
+            source="/assets/track.png",  # Dash automatically serves from assets/
             xref="x",
             yref="y",
             x=0,
@@ -270,8 +270,13 @@ app.clientside_callback(
         // Update slider
         const sliderUpdate = newFrame;
 
-        // Update figure traces (car positions)
-        const figure = window.Plotly.data('track-graph');
+        // Get current graph element
+        const graphDiv = document.getElementById('track-graph');
+        if (!graphDiv || !graphDiv.data) {
+            return [sliderUpdate, state];
+        }
+
+        // Prepare update data for each trace
         const update = {x: [], y: []};
 
         trajectories.car_ids.forEach((carId, idx) => {
@@ -285,8 +290,13 @@ app.clientside_callback(
                 update.y.push([y]);
             } else {
                 // Keep previous position if current is invalid
-                update.x.push([figure[idx].x[0]]);
-                update.y.push([figure[idx].y[0]]);
+                if (graphDiv.data[idx] && graphDiv.data[idx].x && graphDiv.data[idx].x.length > 0) {
+                    update.x.push([graphDiv.data[idx].x[0]]);
+                    update.y.push([graphDiv.data[idx].y[0]]);
+                } else {
+                    update.x.push([0]);
+                    update.y.push([0]);
+                }
             }
         });
 
@@ -325,7 +335,7 @@ if __name__ == '__main__':
     logger.info(f"Starting dashboard on http://{config.APP_HOST}:{config.APP_PORT}")
     logger.info(f"{'='*60}\n")
 
-    app.run_server(
+    app.run(
         host=config.APP_HOST,
         port=config.APP_PORT,
         debug=config.DEBUG
