@@ -1,0 +1,271 @@
+{
+  "event_name": "barber_r1",
+  "generated_at": "2025-11-01T18:25:24.240769",
+  "data_path": "data\\processed",
+  "chassis_ids": [
+    "010",
+    "002"
+  ],
+  "cars": {
+    "010": {
+      "chassis_id": "010",
+      "total_samples": 585728,
+      "unique_signals": 12,
+      "time_start": "2025-09-05T01:40:35.898000+00:00",
+      "time_end": "2025-09-05T02:25:33.889000+00:00",
+      "time_span_sec": 2697.99,
+      "signals": {
+        "Laptrigger_lapdist_dls": {
+          "signal_name": "Laptrigger_lapdist_dls",
+          "sample_count": 12408,
+          "non_null_count": 12408,
+          "coverage_pct": 100.0,
+          "time_start": "2025-09-05T01:40:36.027000+00:00",
+          "time_end": "2025-09-05T02:25:33.803000+00:00",
+          "time_span_sec": 2697.78,
+          "hz_avg": 4.6
+        },
+        "Steering_Angle": {
+          "signal_name": "Steering_Angle",
+          "sample_count": 60946,
+          "non_null_count": 60946,
+          "coverage_pct": 100.0,
+          "time_start": "2025-09-05T01:40:35.898000+00:00",
+          "time_end": "2025-09-05T02:25:33.889000+00:00",
+          "time_span_sec": 2697.99,
+          "hz_avg": 22.59
+        },
+        "VBOX_Lat_Min": {
+          "signal_name": "VBOX_Lat_Min",
+          "sample_count": 60946,
+          "non_null_count": 60946,
+          "coverage_pct": 100.0,
+          "time_start": "2025-09-05T01:40:35.898000+00:00",
+          "time_end": "2025-09-05T02:25:33.889000+00:00",
+          "time_span_sec": 2697.99,
+          "hz_avg": 22.59
+        },
+        "VBOX_Long_Minutes": {
+          "signal_name": "VBOX_Long_Minutes",
+          "sample_count": 60946,
+          "non_null_count": 60946,
+          "coverage_pct": 100.0,
+          "time_start": "2025-09-05T01:40:35.898000+00:00",
+          "time_end": "2025-09-05T02:25:33.889000+00:00",
+          "time_span_sec": 2697.99,
+          "hz_avg": 22.59
+        },
+        "accx_can": {
+          "signal_name": "accx_can",
+          "sample_count": 60946,
+          "non_null_count": 60946,
+          "coverage_pct": 100.0,
+          "time_start": "2025-09-05T01:40:35.898000+00:00",
+          "time_end": "2025-09-05T02:25:33.889000+00:00",
+          "time_span_sec": 2697.99,
+          "hz_avg": 22.59
+        },
+        "accy_can": {
+          "signal_name": "accy_can",
+          "sample_count": 60946,
+          "non_null_count": 60946,
+          "coverage_pct": 100.0,
+          "time_start": "2025-09-05T01:40:35.898000+00:00",
+          "time_end": "2025-09-05T02:25:33.889000+00:00",
+          "time_span_sec": 2697.99,
+          "hz_avg": 22.59
+        },
+        "aps": {
+          "signal_name": "aps",
+          "sample_count": 60946,
+          "non_null_count": 60946,
+          "coverage_pct": 100.0,
+          "time_start": "2025-09-05T01:40:35.898000+00:00",
+          "time_end": "2025-09-05T02:25:33.889000+00:00",
+          "time_span_sec": 2697.99,
+          "hz_avg": 22.59
+        },
+        "gear": {
+          "signal_name": "gear",
+          "sample_count": 60946,
+          "non_null_count": 60946,
+          "coverage_pct": 100.0,
+          "time_start": "2025-09-05T01:40:35.898000+00:00",
+          "time_end": "2025-09-05T02:25:33.889000+00:00",
+          "time_span_sec": 2697.99,
+          "hz_avg": 22.59
+        },
+        "nmot": {
+          "signal_name": "nmot",
+          "sample_count": 12408,
+          "non_null_count": 12408,
+          "coverage_pct": 100.0,
+          "time_start": "2025-09-05T01:40:36.027000+00:00",
+          "time_end": "2025-09-05T02:25:33.803000+00:00",
+          "time_span_sec": 2697.78,
+          "hz_avg": 4.6
+        },
+        "pbrake_f": {
+          "signal_name": "pbrake_f",
+          "sample_count": 60946,
+          "non_null_count": 60946,
+          "coverage_pct": 100.0,
+          "time_start": "2025-09-05T01:40:35.898000+00:00",
+          "time_end": "2025-09-05T02:25:33.889000+00:00",
+          "time_span_sec": 2697.99,
+          "hz_avg": 22.59
+        },
+        "pbrake_r": {
+          "signal_name": "pbrake_r",
+          "sample_count": 60946,
+          "non_null_count": 60946,
+          "coverage_pct": 100.0,
+          "time_start": "2025-09-05T01:40:35.898000+00:00",
+          "time_end": "2025-09-05T02:25:33.889000+00:00",
+          "time_span_sec": 2697.99,
+          "hz_avg": 22.59
+        },
+        "speed": {
+          "signal_name": "speed",
+          "sample_count": 12398,
+          "non_null_count": 12398,
+          "coverage_pct": 100.0,
+          "time_start": "2025-09-05T01:40:36.070000+00:00",
+          "time_end": "2025-09-05T02:25:33.889000+00:00",
+          "time_span_sec": 2697.82,
+          "hz_avg": 4.6
+        }
+      }
+    },
+    "002": {
+      "chassis_id": "002",
+      "total_samples": 84745,
+      "unique_signals": 12,
+      "time_start": "2025-09-05T01:05:34.870000+00:00",
+      "time_end": "2025-09-05T01:12:36.506000+00:00",
+      "time_span_sec": 421.64,
+      "signals": {
+        "Laptrigger_lapdist_dls": {
+          "signal_name": "Laptrigger_lapdist_dls",
+          "sample_count": 1794,
+          "non_null_count": 1794,
+          "coverage_pct": 100.0,
+          "time_start": "2025-09-05T01:05:34.870000+00:00",
+          "time_end": "2025-09-05T01:12:36.374000+00:00",
+          "time_span_sec": 421.5,
+          "hz_avg": 4.26
+        },
+        "Steering_Angle": {
+          "signal_name": "Steering_Angle",
+          "sample_count": 8819,
+          "non_null_count": 8819,
+          "coverage_pct": 100.0,
+          "time_start": "2025-09-05T01:05:34.870000+00:00",
+          "time_end": "2025-09-05T01:12:36.506000+00:00",
+          "time_span_sec": 421.64,
+          "hz_avg": 20.92
+        },
+        "VBOX_Lat_Min": {
+          "signal_name": "VBOX_Lat_Min",
+          "sample_count": 8818,
+          "non_null_count": 8818,
+          "coverage_pct": 100.0,
+          "time_start": "2025-09-05T01:05:34.870000+00:00",
+          "time_end": "2025-09-05T01:12:36.506000+00:00",
+          "time_span_sec": 421.64,
+          "hz_avg": 20.91
+        },
+        "VBOX_Long_Minutes": {
+          "signal_name": "VBOX_Long_Minutes",
+          "sample_count": 8818,
+          "non_null_count": 8818,
+          "coverage_pct": 100.0,
+          "time_start": "2025-09-05T01:05:34.870000+00:00",
+          "time_end": "2025-09-05T01:12:36.506000+00:00",
+          "time_span_sec": 421.64,
+          "hz_avg": 20.91
+        },
+        "accx_can": {
+          "signal_name": "accx_can",
+          "sample_count": 8818,
+          "non_null_count": 8818,
+          "coverage_pct": 100.0,
+          "time_start": "2025-09-05T01:05:34.870000+00:00",
+          "time_end": "2025-09-05T01:12:36.506000+00:00",
+          "time_span_sec": 421.64,
+          "hz_avg": 20.91
+        },
+        "accy_can": {
+          "signal_name": "accy_can",
+          "sample_count": 8818,
+          "non_null_count": 8818,
+          "coverage_pct": 100.0,
+          "time_start": "2025-09-05T01:05:34.870000+00:00",
+          "time_end": "2025-09-05T01:12:36.506000+00:00",
+          "time_span_sec": 421.64,
+          "hz_avg": 20.91
+        },
+        "aps": {
+          "signal_name": "aps",
+          "sample_count": 8818,
+          "non_null_count": 8818,
+          "coverage_pct": 100.0,
+          "time_start": "2025-09-05T01:05:34.870000+00:00",
+          "time_end": "2025-09-05T01:12:36.506000+00:00",
+          "time_span_sec": 421.64,
+          "hz_avg": 20.91
+        },
+        "gear": {
+          "signal_name": "gear",
+          "sample_count": 8818,
+          "non_null_count": 8818,
+          "coverage_pct": 100.0,
+          "time_start": "2025-09-05T01:05:34.870000+00:00",
+          "time_end": "2025-09-05T01:12:36.506000+00:00",
+          "time_span_sec": 421.64,
+          "hz_avg": 20.91
+        },
+        "nmot": {
+          "signal_name": "nmot",
+          "sample_count": 1794,
+          "non_null_count": 1794,
+          "coverage_pct": 100.0,
+          "time_start": "2025-09-05T01:05:34.870000+00:00",
+          "time_end": "2025-09-05T01:12:36.374000+00:00",
+          "time_span_sec": 421.5,
+          "hz_avg": 4.26
+        },
+        "pbrake_f": {
+          "signal_name": "pbrake_f",
+          "sample_count": 8818,
+          "non_null_count": 8818,
+          "coverage_pct": 100.0,
+          "time_start": "2025-09-05T01:05:34.870000+00:00",
+          "time_end": "2025-09-05T01:12:36.506000+00:00",
+          "time_span_sec": 421.64,
+          "hz_avg": 20.91
+        },
+        "pbrake_r": {
+          "signal_name": "pbrake_r",
+          "sample_count": 8818,
+          "non_null_count": 8818,
+          "coverage_pct": 100.0,
+          "time_start": "2025-09-05T01:05:34.870000+00:00",
+          "time_end": "2025-09-05T01:12:36.506000+00:00",
+          "time_span_sec": 421.64,
+          "hz_avg": 20.91
+        },
+        "speed": {
+          "signal_name": "speed",
+          "sample_count": 1794,
+          "non_null_count": 1794,
+          "coverage_pct": 100.0,
+          "time_start": "2025-09-05T01:05:34.912000+00:00",
+          "time_end": "2025-09-05T01:12:36.417000+00:00",
+          "time_span_sec": 421.5,
+          "hz_avg": 4.26
+        }
+      }
+    }
+  }
+}

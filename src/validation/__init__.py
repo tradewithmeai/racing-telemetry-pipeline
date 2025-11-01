@@ -1,18 +1,17 @@
-"""Great Expectations validation suite for telemetry data."""
+"""Validation module for pipeline quality checks."""
 
-from src.validation.suite_builder import build_expectation_suite, ExpectationLevel
-from src.validation.validators import (
-    validate_raw_curated,
-    validate_refined,
-    validate_simulation_ready,
+from src.validation.baseline_validator import (
+    validate_against_baseline,
+    load_baseline,
     ValidationResult,
+    ValidationCheck,
+    PipelineValidationError,
 )
 
 __all__ = [
-    "build_expectation_suite",
-    "ExpectationLevel",
-    "validate_raw_curated",
-    "validate_refined",
-    "validate_simulation_ready",
+    "validate_against_baseline",
+    "load_baseline",
     "ValidationResult",
+    "ValidationCheck",
+    "PipelineValidationError",
 ]

@@ -43,7 +43,8 @@ from src.transform import (
     save_synchronized_data,
     save_sync_stats,
 )
-from src.validation import validate_simulation_ready
+from src.validation.validators import validate_simulation_ready
+from src.validation.baseline_validator import validate_against_baseline, PipelineValidationError
 from src.utils.logging_utils import get_logger
 
 logger = get_logger("full_pipeline")
@@ -197,6 +198,7 @@ def run_pipeline(
     data_path: Path = Path("data/processed"),
     output_event_name: str = "barber_r1_pipeline",
     skip_validation: bool = False,
+    strict_baseline: bool = True,
 ):
     """Run complete end-to-end pipeline for multiple cars.
 
@@ -205,7 +207,8 @@ def run_pipeline(
         event_name: Input event name
         data_path: Path to processed data directory
         output_event_name: Output event name for results
-        skip_validation: Skip validation stage (GX 1.x has API compatibility issues)
+        skip_validation: Skip GX validation stage (API compatibility issues)
+        strict_baseline: Fail hard on baseline validation failures (default: True)
     """
     logger.info("\n" + "="*60)
     logger.info("FULL PIPELINE: END-TO-END PROCESSING")
@@ -213,12 +216,22 @@ def run_pipeline(
     logger.info(f"  Event: {event_name}")
     logger.info(f"  Cars: {chassis_ids}")
     logger.info(f"  Output: {output_event_name}")
+    logger.info(f"  Baseline validation: {'STRICT' if strict_baseline else 'WARN-ONLY'}")
     logger.info("="*60 + "\n")
+
+    # Load baseline once for all cars
+    baseline_path = Path("data/baselines") / f"{event_name}_baseline.json"
+    if not baseline_path.exists():
+        logger.warning(f"Baseline not found: {baseline_path}")
+        logger.warning("Run: python tools/compute_baseline.py to generate baseline")
+        logger.warning("Continuing without baseline validation...")
+        baseline_path = None
 
     # Track statistics
     pivot_stats = {}
     resample_stats = {}
     dfs_resampled = {}
+    validation_results = {}
 
     # Process each car
     for chassis_id in chassis_ids:
@@ -251,6 +264,22 @@ def run_pipeline(
 
             pivot_stats[chassis_id] = pivot_stat
 
+            # Baseline validation: Post-pivot
+            if baseline_path:
+                try:
+                    validate_against_baseline(
+                        df=df_wide,
+                        baseline_path=baseline_path,
+                        chassis_id=chassis_id,
+                        stage="pivot",
+                        strict=strict_baseline,
+                        time_col='time_corrected',
+                    )
+                except PipelineValidationError as e:
+                    logger.error(f"Baseline validation failed: {e}")
+                    if strict_baseline:
+                        raise
+
             # Stage 4: Position normalization (now on wide format with GPS columns)
             df_wide = apply_position_normalization(df_wide, chassis_id)
 
@@ -269,6 +298,23 @@ def run_pipeline(
 
             resample_stats[chassis_id] = resample_stat
             dfs_resampled[chassis_id] = df_resampled
+
+            # Baseline validation: Post-resample
+            if baseline_path:
+                try:
+                    result = validate_against_baseline(
+                        df=df_resampled,
+                        baseline_path=baseline_path,
+                        chassis_id=chassis_id,
+                        stage="resample",
+                        strict=strict_baseline,
+                        time_col='time_corrected',
+                    )
+                    validation_results[chassis_id] = result
+                except PipelineValidationError as e:
+                    logger.error(f"Baseline validation failed: {e}")
+                    if strict_baseline:
+                        raise
 
             logger.info(f"✅ Successfully processed chassis {chassis_id}")
 
@@ -312,6 +358,24 @@ def run_pipeline(
     save_pivot_stats(pivot_stats, output_path, output_event_name)
     save_resample_stats(resample_stats, output_path, output_event_name)
     save_sync_stats(sync_stats_obj, coverage_by_car, output_path, output_event_name)
+
+    # Save baseline validation results
+    if validation_results:
+        import json
+        validation_report_path = output_path / output_event_name / "baseline_validation.json"
+        validation_report_path.parent.mkdir(parents=True, exist_ok=True)
+
+        validation_report = {
+            "event_name": output_event_name,
+            "generated_at": datetime.now().isoformat(),
+            "overall_status": "PASS" if all(v.passed for v in validation_results.values()) else "FAIL",
+            "cars": {cid: v.to_dict() for cid, v in validation_results.items()},
+        }
+
+        with open(validation_report_path, "w") as f:
+            json.dump(validation_report, f, indent=2)
+
+        logger.info(f"\n  Baseline validation report: {validation_report_path}")
 
     # Stage 7: Validation (optional)
     validation_result = None
@@ -387,7 +451,13 @@ def main():
     parser.add_argument(
         '--skip-validation',
         action='store_true',
-        help='Skip validation stage (recommended until GX 1.x API issues are resolved)',
+        help='Skip GX validation stage (recommended until GX 1.x API issues are resolved)',
+    )
+
+    parser.add_argument(
+        '--no-strict-baseline',
+        action='store_true',
+        help='Disable strict baseline validation (warn only, do not fail)',
     )
 
     args = parser.parse_args()
@@ -399,6 +469,7 @@ def main():
         data_path=args.data_path,
         output_event_name=args.output,
         skip_validation=args.skip_validation,
+        strict_baseline=not args.no_strict_baseline,
     )
 
 
