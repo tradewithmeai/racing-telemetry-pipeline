@@ -367,27 +367,28 @@ def update_frame_info(state, traj_data):
     Output('frame-slider', 'value'),
     Output('store-state', 'data', allow_duplicate=True),
     Input('ticker', 'n_intervals'),
+    State('frame-slider', 'value'),  # Use current slider value as frame source
     State('store-state', 'data'),
     State('store-trajectories', 'data'),
     prevent_initial_call=True
 )
-def animate_frame(n_intervals, state, traj_data):
+def animate_frame(n_intervals, current_frame, state, traj_data):
     """Advance frame when playing."""
-    logger.info(f"animate_frame called: n_intervals={n_intervals}, playing={state.get('playing')}, frame={state.get('frame')}")
+    logger.info(f"animate_frame called: n_intervals={n_intervals}, playing={state.get('playing')}, current_frame={current_frame}")
 
     if not state.get('playing', False):
         logger.info("Not playing, raising PreventUpdate")
         raise dash.exceptions.PreventUpdate
 
-    # Advance frame
-    new_frame = state['frame'] + int(state.get('speed', 1))
-    logger.info(f"Advancing frame from {state['frame']} to {new_frame} (speed={state.get('speed', 1)})")
+    # Advance frame from current slider position
+    new_frame = current_frame + int(state.get('speed', 1))
+    logger.info(f"Advancing frame from {current_frame} to {new_frame} (speed={state.get('speed', 1)})")
 
     if new_frame >= traj_data['frame_count']:
         new_frame = 0  # Loop back to start
         logger.info("Reached end, looping back to 0")
 
-    # Update state
+    # Update state with new frame
     state['frame'] = new_frame
 
     return new_frame, state
