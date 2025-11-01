@@ -65,15 +65,34 @@ logger.info(f"Cars: {DEFAULT_CARS}")
 try:
     # Load ribbons
     import numpy as np
+    import json
+    import pickle
+
     ribbons_data = load_ribbons(config.RIBBONS_FILE)
     logger.info(f"Loaded {len(ribbons_data['ribbons'])} ribbons")
 
-    # Load telemetry
-    df = load_telemetry_simple(PARQUET_PATH, DEFAULT_CARS)
+    # Check for cached trajectories
+    cache_file = Path(__file__).parent / "cache" / f"trajectories_{'_'.join(DEFAULT_CARS)}.pkl"
+    cache_file.parent.mkdir(exist_ok=True)
 
-    # Prepare trajectories (disable GPS fallback for faster startup during development)
-    store_data = prepare_trajectories(df, ribbons_data, config.DEFAULT_RIBBON_BY_CAR, use_gps_fallback=False)
-    logger.info(f"Prepared {len(store_data['car_ids'])} car trajectories")
+    if cache_file.exists():
+        logger.info(f"Loading cached trajectories from {cache_file.name}...")
+        with open(cache_file, 'rb') as f:
+            store_data = pickle.load(f)
+        logger.info(f"Loaded {len(store_data['car_ids'])} car trajectories from cache")
+    else:
+        logger.info("No cache found, computing trajectories...")
+        # Load telemetry
+        df = load_telemetry_simple(PARQUET_PATH, DEFAULT_CARS)
+
+        # Prepare trajectories (disable GPS fallback for faster startup during development)
+        store_data = prepare_trajectories(df, ribbons_data, config.DEFAULT_RIBBON_BY_CAR, use_gps_fallback=False)
+        logger.info(f"Prepared {len(store_data['car_ids'])} car trajectories")
+
+        # Save to cache
+        logger.info(f"Saving trajectories to cache: {cache_file.name}")
+        with open(cache_file, 'wb') as f:
+            pickle.dump(store_data, f)
 
     # Get bounds for visualization
     center_ribbon = next(r for r in ribbons_data['ribbons'] if r['name'] == 'center')
