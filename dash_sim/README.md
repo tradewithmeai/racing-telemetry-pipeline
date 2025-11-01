@@ -42,7 +42,14 @@ The image should be an overhead/satellite view of Barber Motorsports Park. The c
 ### Basic Usage
 
 ```bash
+# Default: uses config.py settings
 python app.py
+
+# Override cars and parquet path
+python app.py --cars 010 002 --parquet ../data/processed/barber_r1_pipeline/synchronized/multi_car_frames.parquet
+
+# Test with single car
+python app.py --cars 010
 ```
 
 Then open your browser to: **http://127.0.0.1:8050**
@@ -79,12 +86,21 @@ The dashboard expects synchronized multi-car telemetry from the pipeline:
 **Input file**: `../data/processed/barber_r1_pipeline/synchronized/multi_car_frames.parquet`
 
 **Required columns**:
-- `time_global` (datetime) - Global timeline
-- `chassis_id` (str) - Car identifier
+- `time_global` (datetime) - Global timeline synchronized across all cars
+- `chassis_id` (str) - Car identifier (e.g., "010", "002")
 - `car_no` (str) - Car number for display
-- `gps_lat` (float) - Latitude in degrees
-- `gps_lon` (float) - Longitude in degrees
-- `speed`, `gear`, `aps`, `lap_repaired` (optional, for future telemetry display)
+- `gps_lat` (float) - Latitude in decimal degrees
+- `gps_lon` (float) - Longitude in decimal degrees
+
+**Optional columns** (recommended for best experience):
+- `track_distance_m` (float) - Distance along track centerline in meters (preferred for positioning)
+- `speed_final` (float) - Velocity in m/s (derived + interpolated, preferred over `speed`)
+- `speed` (float) - Raw velocity in m/s (fallback if `speed_final` not available)
+- `gear`, `aps`, `lap_repaired` - Additional telemetry for hover tooltips (Phase 3)
+
+**Column priority**:
+- **Position**: Uses `track_distance_m` if available (centerline-snapped), falls back to `gps_lat/gps_lon`
+- **Speed**: Uses `speed_final` if available (98.8% coverage with interpolation), falls back to `speed`
 
 ## Architecture
 

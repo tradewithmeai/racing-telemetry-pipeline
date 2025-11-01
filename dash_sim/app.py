@@ -5,6 +5,8 @@ from dash import dcc, html, Input, Output, State, ClientsideFunction
 import plotly.graph_objects as go
 from pathlib import Path
 import logging
+import argparse
+import sys
 
 import config
 from data_loader import load_and_prepare_data
@@ -15,6 +17,35 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+
+def parse_args():
+    """Parse command-line arguments for runtime configuration overrides."""
+    parser = argparse.ArgumentParser(description="Race Replay Dashboard")
+    parser.add_argument(
+        '--cars',
+        nargs='+',
+        help='Chassis IDs to display (e.g., --cars 010 002)',
+    )
+    parser.add_argument(
+        '--parquet',
+        type=Path,
+        help='Path to synchronized multi-car parquet file',
+    )
+    parser.add_argument(
+        '--track',
+        help='Track name (e.g., barber)',
+    )
+    return parser.parse_args()
+
+
+# Parse CLI arguments and override config if provided
+args = parse_args()
+
+# Override config with CLI args if provided
+PARQUET_PATH = args.parquet if args.parquet else config.PARQUET_PATH
+CURRENT_TRACK = args.track if args.track else config.CURRENT_TRACK
+DEFAULT_CARS = args.cars if args.cars else config.DEFAULT_CARS
 
 # Initialize Dash app
 app = dash.Dash(
@@ -27,12 +58,15 @@ app = dash.Dash(
 logger.info("=" * 60)
 logger.info("RACE REPLAY DASHBOARD - INITIALIZING")
 logger.info("=" * 60)
+logger.info(f"Parquet: {PARQUET_PATH}")
+logger.info(f"Track: {CURRENT_TRACK}")
+logger.info(f"Cars: {DEFAULT_CARS}")
 
 try:
     store_data, transformer, track = load_and_prepare_data(
-        config.PARQUET_PATH,
-        config.CURRENT_TRACK,
-        config.DEFAULT_CARS
+        PARQUET_PATH,
+        CURRENT_TRACK,
+        DEFAULT_CARS
     )
     # Get track bounds for visualization scaling
     x_min, x_max, y_min, y_max = transformer.get_bounds()

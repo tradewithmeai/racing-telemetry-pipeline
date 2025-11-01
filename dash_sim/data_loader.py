@@ -154,7 +154,14 @@ class TelemetryDataLoader:
             logger.info(f"  Car {car_id}: Used track_distance for {used_track_dist} frames, GPS for {used_gps} frames")
 
             # Extract telemetry (for future hover tooltips)
-            speed = car_indexed['speed'].values if 'speed' in car_indexed.columns else np.full(len(car_indexed), np.nan)
+            # Prefer speed_final (derived + interpolated), fallback to speed (raw)
+            if 'speed_final' in car_indexed.columns:
+                speed = car_indexed['speed_final'].values
+            elif 'speed' in car_indexed.columns:
+                speed = car_indexed['speed'].values
+            else:
+                speed = np.full(len(car_indexed), np.nan)
+
             gear = car_indexed['gear'].values if 'gear' in car_indexed.columns else np.full(len(car_indexed), np.nan)
             aps = car_indexed['aps'].values if 'aps' in car_indexed.columns else np.full(len(car_indexed), np.nan)
             lap = car_indexed['lap_repaired'].values if 'lap_repaired' in car_indexed.columns else np.full(len(car_indexed), np.nan)

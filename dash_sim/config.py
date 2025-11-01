@@ -6,6 +6,10 @@ from pathlib import Path
 BASE_DIR = Path(__file__).parent.parent
 PARQUET_PATH = BASE_DIR / "data/processed/barber_r1_pipeline/synchronized/multi_car_frames.parquet"
 
+# Track configuration
+CURRENT_TRACK = "barber"  # Current track name
+TRACKS_DIR = Path(__file__).parent / "tracks"  # Directory containing track definitions
+
 # Track files (simple ribbon system)
 CENTERLINE_FILE = Path(__file__).parent / "assets/track_centerline.npy"
 RIBBONS_FILE = Path(__file__).parent / "assets/track_ribbons.json"
