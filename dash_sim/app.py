@@ -71,8 +71,8 @@ try:
     # Load telemetry
     df = load_telemetry_simple(PARQUET_PATH, DEFAULT_CARS)
 
-    # Prepare trajectories
-    store_data = prepare_trajectories(df, ribbons_data, config.DEFAULT_RIBBON_BY_CAR)
+    # Prepare trajectories (disable GPS fallback for faster startup during development)
+    store_data = prepare_trajectories(df, ribbons_data, config.DEFAULT_RIBBON_BY_CAR, use_gps_fallback=False)
     logger.info(f"Prepared {len(store_data['car_ids'])} car trajectories")
 
     # Get bounds for visualization
