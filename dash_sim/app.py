@@ -291,13 +291,12 @@ app.layout = html.Div([
     Output('ticker', 'disabled'),
     Input('btn-play', 'n_clicks'),
     Input('btn-pause', 'n_clicks'),
-    Input('frame-slider', 'value'),
     Input('speed-dropdown', 'value'),
     State('store-state', 'data'),
     prevent_initial_call=True
 )
-def control_playback(play_clicks, pause_clicks, slider_value, speed, state):
-    """Handle play/pause/seek/speed controls."""
+def control_playback(play_clicks, pause_clicks, speed, state):
+    """Handle play/pause/speed controls (slider removed to avoid circular dependency)."""
     ctx = dash.callback_context
 
     if not ctx.triggered:
@@ -313,10 +312,6 @@ def control_playback(play_clicks, pause_clicks, slider_value, speed, state):
         logger.info("⏸ PAUSE")
         state['playing'] = False
         return state, True  # Disable ticker
-    elif trigger_id == 'frame-slider':
-        state['frame'] = slider_value
-        state['playing'] = False  # Pause when seeking
-        return state, True
     elif trigger_id == 'speed-dropdown':
         logger.info(f"Speed: {speed}x")
         state['speed'] = speed
@@ -370,42 +365,30 @@ def update_frame_info(state, traj_data):
     return f"Frame: {frame:,} / {total:,} | Time: {int(time_sec // 60)}:{int(time_sec % 60):02d}"
 
 
-# Server-side animation callback - update state only
+# Server-side animation callback
 @app.callback(
-    Output('store-state', 'data', allow_duplicate=True),
+    Output('frame-slider', 'value'),
     Input('ticker', 'n_intervals'),
+    State('frame-slider', 'value'),
     State('store-state', 'data'),
     State('store-trajectories', 'data'),
     prevent_initial_call=True
 )
-def animate_frame(n_intervals, state, traj_data):
+def animate_frame(n_intervals, current_frame, state, traj_data):
     """Advance frame when playing."""
     if not state.get('playing', False):
         raise dash.exceptions.PreventUpdate
 
-    # Advance frame from state
-    new_frame = state['frame'] + int(state.get('speed', 1))
+    # Advance frame from current slider position (source of truth)
+    new_frame = (current_frame if current_frame is not None else 0) + int(state.get('speed', 1))
 
     if new_frame >= traj_data['frame_count']:
         new_frame = 0  # Loop back to start
 
-    # Update state with new frame
-    state['frame'] = new_frame
+    if new_frame % 100 == 0:  # Log every 100 frames
+        logger.info(f"Frame: {new_frame}")
 
-    logger.info(f"Frame: {new_frame}")
-
-    return state
-
-
-# Sync slider with state
-@app.callback(
-    Output('frame-slider', 'value'),
-    Input('store-state', 'data'),
-    prevent_initial_call=True
-)
-def sync_slider_to_state(state):
-    """Keep slider in sync with state."""
-    return state['frame']
+    return new_frame
 
 
 @app.callback(
