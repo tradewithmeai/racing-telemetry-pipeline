@@ -282,27 +282,24 @@ def control_playback(play_clicks, pause_clicks, slider_value, speed, state):
     ctx = dash.callback_context
 
     if not ctx.triggered:
-        logger.info("control_playback: No trigger")
         return state, True
 
     trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
-    logger.info(f"control_playback: trigger={trigger_id}, state={state}")
 
     if trigger_id == 'btn-play':
-        logger.info("PLAY button clicked - enabling ticker")
+        logger.info("▶ PLAY")
         state['playing'] = True
         return state, False  # Enable ticker
     elif trigger_id == 'btn-pause':
-        logger.info("PAUSE button clicked - disabling ticker")
+        logger.info("⏸ PAUSE")
         state['playing'] = False
         return state, True  # Disable ticker
     elif trigger_id == 'frame-slider':
-        logger.info(f"Slider moved to {slider_value} - pausing")
         state['frame'] = slider_value
         state['playing'] = False  # Pause when seeking
         return state, True
     elif trigger_id == 'speed-dropdown':
-        logger.info(f"Speed changed to {speed}")
+        logger.info(f"Speed: {speed}x")
         state['speed'] = speed
         return state, not state['playing']
 
@@ -318,10 +315,7 @@ def control_playback(play_clicks, pause_clicks, slider_value, speed, state):
 )
 def update_graph_on_slider(frame_idx, traj_data, current_fig):
     """Update car positions when slider is moved (for manual scrubbing)."""
-    logger.info(f"update_graph_on_slider called: frame_idx={frame_idx}")
-
     if current_fig is None:
-        logger.warning("current_fig is None, returning no_update")
         return dash.no_update
 
     # Car traces start after ribbons (11 ribbon traces)
@@ -340,11 +334,6 @@ def update_graph_on_slider(frame_idx, traj_data, current_fig):
                 trace_idx = ribbon_count + idx  # Offset by number of ribbons
                 current_fig['data'][trace_idx]['x'] = [x]
                 current_fig['data'][trace_idx]['y'] = [y]
-                logger.info(f"  Updated car {car_id} at trace_idx={trace_idx} to ({x:.1f}, {y:.1f})")
-            else:
-                logger.info(f"  Car {car_id} has NaN position at frame {frame_idx}")
-        else:
-            logger.info(f"  Car {car_id} has None position at frame {frame_idx}")
 
     return current_fig
 
@@ -362,36 +351,42 @@ def update_frame_info(state, traj_data):
     return f"Frame: {frame:,} / {total:,} | Time: {int(time_sec // 60)}:{int(time_sec % 60):02d}"
 
 
-# Server-side animation callback (simpler, easier to debug than client-side)
+# Server-side animation callback - update state only
 @app.callback(
-    Output('frame-slider', 'value'),
     Output('store-state', 'data', allow_duplicate=True),
     Input('ticker', 'n_intervals'),
-    State('frame-slider', 'value'),  # Use current slider value as frame source
     State('store-state', 'data'),
     State('store-trajectories', 'data'),
     prevent_initial_call=True
 )
-def animate_frame(n_intervals, current_frame, state, traj_data):
+def animate_frame(n_intervals, state, traj_data):
     """Advance frame when playing."""
-    logger.info(f"animate_frame called: n_intervals={n_intervals}, playing={state.get('playing')}, current_frame={current_frame}")
-
     if not state.get('playing', False):
-        logger.info("Not playing, raising PreventUpdate")
         raise dash.exceptions.PreventUpdate
 
-    # Advance frame from current slider position
-    new_frame = current_frame + int(state.get('speed', 1))
-    logger.info(f"Advancing frame from {current_frame} to {new_frame} (speed={state.get('speed', 1)})")
+    # Advance frame from state
+    new_frame = state['frame'] + int(state.get('speed', 1))
 
     if new_frame >= traj_data['frame_count']:
         new_frame = 0  # Loop back to start
-        logger.info("Reached end, looping back to 0")
 
     # Update state with new frame
     state['frame'] = new_frame
 
-    return new_frame, state
+    logger.info(f"Frame: {new_frame}")
+
+    return state
+
+
+# Sync slider with state
+@app.callback(
+    Output('frame-slider', 'value'),
+    Input('store-state', 'data'),
+    prevent_initial_call=True
+)
+def sync_slider_to_state(state):
+    """Keep slider in sync with state."""
+    return state['frame']
 
 
 @app.callback(
