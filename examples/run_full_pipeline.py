@@ -236,11 +236,8 @@ def run_pipeline(
             # Stage 2: Lap repair
             df = apply_lap_repair(df, chassis_id)
 
-            # Stage 3: Position normalization
-            df = apply_position_normalization(df, chassis_id)
-
-            # Stage 4: Pivot (long → wide format)
-            logger.info(f"\n[STAGE 4: PIVOT] {chassis_id}")
+            # Stage 3: Pivot (long → wide format) - MUST RUN BEFORE POSITION NORMALIZATION
+            logger.info(f"\n[STAGE 3: PIVOT] {chassis_id}")
             logger.info("="*60)
 
             df_wide, pivot_stat = pivot_to_wide_format(
@@ -253,6 +250,9 @@ def run_pipeline(
             )
 
             pivot_stats[chassis_id] = pivot_stat
+
+            # Stage 4: Position normalization (now on wide format with GPS columns)
+            df_wide = apply_position_normalization(df_wide, chassis_id)
 
             # Stage 5: Resample to 20Hz
             logger.info(f"\n[STAGE 5: RESAMPLE] {chassis_id}")

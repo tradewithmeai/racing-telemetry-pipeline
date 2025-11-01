@@ -248,7 +248,11 @@ def normalize_position_data(
     )
 
     # Step 1: Extract GPS data (already in decimal degrees despite misleading column names)
-    if "VBOX_Lat_Min" in df.columns and "VBOX_Long_Minutes" in df.columns:
+    # Check for either original names (VBOX_*) or renamed columns (gps_*)
+    has_original_gps = "VBOX_Lat_Min" in df.columns and "VBOX_Long_Minutes" in df.columns
+    has_renamed_gps = "gps_lat" in df.columns and "gps_lon" in df.columns
+
+    if has_original_gps:
         logger.info("\n  [Step 1] Extracting GPS data (already in decimal degrees)...")
 
         # Preserve raw values
@@ -267,8 +271,20 @@ def normalize_position_data(
         logger.info(
             f"    Lon range: {df['gps_lon'].min():.6f} to {df['gps_lon'].max():.6f}"
         )
+    elif has_renamed_gps:
+        logger.info("\n  [Step 1] GPS columns already present (renamed by pivot stage)...")
+
+        # GPS columns already exist with correct names
+        gps_coverage = df["gps_lat"].notna().sum() / total_rows * 100
+        logger.info(f"    GPS coverage: {gps_coverage:.1f}%")
+        logger.info(
+            f"    Lat range: {df['gps_lat'].min():.6f} to {df['gps_lat'].max():.6f}"
+        )
+        logger.info(
+            f"    Lon range: {df['gps_lon'].min():.6f} to {df['gps_lon'].max():.6f}"
+        )
     else:
-        logger.warning("  No GPS columns found (VBOX_Lat_Min, VBOX_Long_Minutes)")
+        logger.warning("  No GPS columns found (VBOX_Lat_Min, VBOX_Long_Minutes or gps_lat, gps_lon)")
         df["gps_lat"] = np.nan
         df["gps_lon"] = np.nan
         df["gps_lat_raw"] = np.nan
@@ -359,7 +375,11 @@ def normalize_position_data(
             logger.info("    No interpolation needed (full coverage)")
 
     # Step 5: Normalize track distance
-    if "Laptrigger_lapdist_dls" in df.columns:
+    # Check for either original name (Laptrigger_lapdist_dls) or renamed column (track_distance_m)
+    has_original_track_dist = "Laptrigger_lapdist_dls" in df.columns
+    has_renamed_track_dist = "track_distance_m" in df.columns
+
+    if has_original_track_dist:
         logger.info("\n  [Step 5] Normalizing track distance...")
 
         # Preserve raw value
@@ -375,8 +395,19 @@ def normalize_position_data(
             logger.info(
                 f"    Range: {df['track_distance_m'].min():.1f}m to {df['track_distance_m'].max():.1f}m"
             )
+    elif has_renamed_track_dist:
+        logger.info("\n  [Step 5] Track distance already present (renamed by pivot stage)...")
+
+        # Track distance column already exists with correct name
+        lapdist_coverage = df["track_distance_m"].notna().sum() / total_rows * 100
+        logger.info(f"    Track distance coverage: {lapdist_coverage:.1f}%")
+
+        if lapdist_coverage > 0:
+            logger.info(
+                f"    Range: {df['track_distance_m'].min():.1f}m to {df['track_distance_m'].max():.1f}m"
+            )
     else:
-        logger.warning("  No track distance column found (Laptrigger_lapdist_dls)")
+        logger.warning("  No track distance column found (Laptrigger_lapdist_dls or track_distance_m)")
         df["track_distance_m"] = np.nan
         df["track_distance_raw"] = np.nan
         lapdist_coverage = 0.0

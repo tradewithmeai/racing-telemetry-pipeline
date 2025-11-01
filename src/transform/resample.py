@@ -193,26 +193,41 @@ def resample_to_time_grid(
         # Count consecutive forward-fills
         # (This is a simplified version; actual implementation would be more complex)
 
-    # Step 7: Compute coverage
+    # Step 7: Compute coverage (SIMULATION-READY METRIC)
     logger.info("\n  [Step 7] Computing coverage...")
 
     rows_after = len(df_resampled)
     actual_hz = rows_after / time_span_sec if time_span_sec > 0 else 0
 
-    # Coverage = % of non-null critical signals
-    critical_signals = ["speed", "Steering_Angle", "aps", "gear"]
-    critical_signals = [sig for sig in critical_signals if sig in df_resampled.columns]
+    # Simulation-ready coverage: requires position (GPS OR track_distance) + speed
+    has_gps_lat = "gps_lat" in df_resampled.columns
+    has_gps_lon = "gps_lon" in df_resampled.columns
+    has_track_dist = "track_distance_m" in df_resampled.columns
+    has_speed = "speed" in df_resampled.columns
 
-    if critical_signals:
-        coverage_pct = (
-            df_resampled[critical_signals].notna().all(axis=1).sum() / rows_after * 100
-        )
+    # Position OK = (gps_lat & gps_lon) OR track_distance_m
+    if has_gps_lat and has_gps_lon:
+        pos_ok = df_resampled["gps_lat"].notna() & df_resampled["gps_lon"].notna()
+    elif has_track_dist:
+        pos_ok = df_resampled["track_distance_m"].notna()
     else:
-        coverage_pct = 0.0
+        pos_ok = pd.Series(False, index=df_resampled.index)
+
+    # Speed OK
+    speed_ok = df_resampled["speed"].notna() if has_speed else pd.Series(False, index=df_resampled.index)
+
+    # Sim-ready = position + speed
+    sim_ready = pos_ok & speed_ok
+
+    coverage_pos_pct = 100.0 * pos_ok.sum() / rows_after if rows_after > 0 else 0.0
+    coverage_speed_pct = 100.0 * speed_ok.sum() / rows_after if rows_after > 0 else 0.0
+    coverage_pct = 100.0 * sim_ready.sum() / rows_after if rows_after > 0 else 0.0
 
     logger.info(f"    Rows after resample: {rows_after:,}")
     logger.info(f"    Actual frequency: {actual_hz:.2f} Hz")
-    logger.info(f"    Coverage (all critical signals): {coverage_pct:.1f}%")
+    logger.info(f"    Coverage (position): {coverage_pos_pct:.1f}%")
+    logger.info(f"    Coverage (speed): {coverage_speed_pct:.1f}%")
+    logger.info(f"    Coverage (sim-ready = pos + speed): {coverage_pct:.1f}%")
 
     # Create stats
     resample_stats = ResampleStats(
