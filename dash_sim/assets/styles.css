@@ -82,3 +82,16 @@ button:active {
     font-family: 'Courier New', monospace;
     font-size: 14px;
 }
+
+/* Fix Dash debug overlay positioning */
+._dash-error-menu {
+    max-height: 300px !important;
+    overflow-y: auto !important;
+    bottom: 0 !important;
+    left: 0 !important;
+}
+
+._dash-error-menu__content {
+    max-height: 250px !important;
+    overflow-y: auto !important;
+}

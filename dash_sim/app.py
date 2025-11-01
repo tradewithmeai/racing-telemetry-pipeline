@@ -315,16 +315,22 @@ def update_graph_on_slider(frame_idx, traj_data, current_fig):
     if current_fig is None:
         return dash.no_update
 
-    # Update each trace with new positions
+    # Car traces start after ribbons (11 ribbon traces)
+    ribbon_count = len(ribbons_data['ribbons'])
+
+    # Update each car trace with new positions
     for idx, car_id in enumerate(traj_data['car_ids']):
         traj = traj_data['trajectories'][car_id]
         x = traj['x'][frame_idx]
         y = traj['y'][frame_idx]
 
-        # Only update if position is valid
-        if x is not None and y is not None and not (isinstance(x, float) and (x != x or y != y)):  # Check for NaN
-            current_fig['data'][idx]['x'] = [x]
-            current_fig['data'][idx]['y'] = [y]
+        # Only update if position is valid (not None and not NaN)
+        if x is not None and y is not None:
+            import math
+            if not (math.isnan(x) or math.isnan(y)):
+                trace_idx = ribbon_count + idx  # Offset by number of ribbons
+                current_fig['data'][trace_idx]['x'] = [x]
+                current_fig['data'][trace_idx]['y'] = [y]
 
     return current_fig
 
