@@ -66,6 +66,10 @@ position:
 
 multi_car:
   min_cars_for_simulation: 3  # Fail if <3 cars
+  min_race_duration_sec: 1800  # Fail if car has <30 minutes of data
+  min_gps_coverage_pct: 80.0  # Fail if car has <80% GPS coverage
+  min_lap_count: 10  # Fail if car has <10 laps
+  min_data_coverage_pct: 10.0  # Fail if car has <10% overall coverage (frames with any data)
 
 lap:
   invalid_sentinel: 32768

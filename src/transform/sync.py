@@ -145,8 +145,19 @@ def align_car_to_global_grid(
     # Rename car's time column to match global
     df_car = df_car.copy()
 
-    if time_col in df_car.columns:
+    # Validate time column has non-null values before proceeding
+    if time_col in df_car.columns and df_car[time_col].notna().any():
         df_car["time_global"] = df_car[time_col]
+    else:
+        logger.warning(
+            f"    {chassis_id}: No valid {time_col} values found. "
+            f"Car data will not be synchronized to global grid."
+        )
+        # Return empty aligned dataframe with same structure
+        df_aligned = df_global_grid.copy()
+        df_aligned["chassis_id"] = chassis_id
+        logger.info(f"    Coverage: 0/{len(df_aligned):,} frames (0.0%)")
+        return df_aligned
 
     # Merge with global grid (left join to keep all global times)
     df_aligned = pd.merge(

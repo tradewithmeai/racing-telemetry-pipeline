@@ -5,7 +5,10 @@ from pathlib import Path
 # Data paths
 BASE_DIR = Path(__file__).parent.parent
 PARQUET_PATH = BASE_DIR / "data/processed/barber_r1_pipeline/synchronized/multi_car_frames.parquet"
-TRACK_IMAGE = Path(__file__).parent / "assets/track.png"
+
+# Track files (simple ribbon system)
+CENTERLINE_FILE = Path(__file__).parent / "assets/track_centerline.npy"
+RIBBONS_FILE = Path(__file__).parent / "assets/track_ribbons.json"
 
 # Cars to display (chassis IDs)
 DEFAULT_CARS = ["010", "002"]  # Start with 2, easy to expand to all 20
@@ -47,20 +50,17 @@ CAR_COLORS = {
 CAR_MARKER_SIZE = 12
 CAR_MARKER_OPACITY = 0.8
 
-# Track image settings
-# These will be auto-detected but can be overridden
-TRACK_IMAGE_WIDTH = None  # Auto-detect from image
-TRACK_IMAGE_HEIGHT = None  # Auto-detect from image
+# Ribbon configuration (from offset_ribbons.py)
+RIBBONS_PER_SIDE = 5           # 5 per side (11 total with center)
+MAX_HALF_WIDTH_M = 6.86        # Barber track width ~45 ft / 2
 
-# GPS bounds for coordinate transformation
-# None = auto-detect from data
-GPS_LAT_MIN = None
-GPS_LAT_MAX = None
-GPS_LON_MIN = None
-GPS_LON_MAX = None
-
-# Padding around track (fraction of image size)
-TRACK_PADDING = 0.05  # 5% padding on all sides
+# Default ribbon assignment per car
+# If not specified, cars are auto-assigned to distribute across ribbons
+DEFAULT_RIBBON_BY_CAR = {
+    "010": "right_1.37m",  # Example: car 010 on first right ribbon
+    "002": "left_1.37m",   # Example: car 002 on first left ribbon
+    # Add more as needed, or leave empty for auto-assignment
+}
 
 # Debug mode
 DEBUG = True  # Shows frame counter, FPS, coordinate grid overlay

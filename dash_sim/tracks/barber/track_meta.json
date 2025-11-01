@@ -1,0 +1,17 @@
+{
+  "source_svg": "D:\\Documents\\Toyota Gazoo Motorsport\\data-validation-automation-station\\dash_sim\\tracks\\barber\\barber.svg",
+  "target_length_m": 3830.0,
+  "actual_length_m": 3830.0000000000073,
+  "pre_scale_length_units": 79651.5939834296,
+  "scale_factor": 0.045024953872521645,
+  "samples": 5000,
+  "smoothing": 0.0,
+  "orientation": "clockwise_ok",
+  "direction_target": "clockwise",
+  "auto_detected": {
+    "length_svg_units": null,
+    "direction": null,
+    "viewbox": null,
+    "detected": false
+  }
+}

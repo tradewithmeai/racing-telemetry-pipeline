@@ -7,6 +7,10 @@ from pathlib import Path
 import yaml
 
 from src.utils.logging_utils import get_logger
+from src.validation.custom_expectations import (
+    ExpectPerCarMinimumCoverage,
+    ExpectPerCarMinimumDuration
+)
 
 logger = get_logger(__name__)
 
@@ -251,6 +255,25 @@ def build_simulation_ready_suite(policy: Dict, context: Optional[Any] = None) ->
             column="chassis_id",
             min_value=min_cars,
             max_value=None
+        )
+    )
+
+    # Per-car data completeness validation
+    multi_car_policy = policy.get("multi_car", {})
+
+    # Minimum coverage per car
+    min_coverage_pct = multi_car_policy.get("min_data_coverage_pct", 10.0)
+    suite.add_expectation(
+        ExpectPerCarMinimumCoverage(
+            min_coverage_pct=min_coverage_pct
+        )
+    )
+
+    # Minimum duration per car
+    min_duration_sec = multi_car_policy.get("min_race_duration_sec", 1800.0)
+    suite.add_expectation(
+        ExpectPerCarMinimumDuration(
+            min_duration_sec=min_duration_sec
         )
     )
 

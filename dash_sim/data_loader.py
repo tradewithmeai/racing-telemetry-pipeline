@@ -6,7 +6,8 @@ from pathlib import Path
 from typing import Dict, List, Tuple, Optional
 import logging
 
-from coordinate_transform import TrackCoordinateTransformer
+from centerline_transform import CenterlineTransformer
+from track_processing import Track
 import config
 
 logger = logging.getLogger(__name__)
@@ -68,16 +69,19 @@ class TelemetryDataLoader:
         self.df = df
         return df
 
-    def compute_trajectories(self, transformer: TrackCoordinateTransformer) -> Dict:
-        """Compute pixel trajectories for all cars.
+    def compute_trajectories(self, transformer: CenterlineTransformer, track: Track) -> Dict:
+        """Compute centerline-based trajectories for all cars.
+
+        Uses track_distance_m from telemetry for accurate positioning.
 
         Args:
-            transformer: Coordinate transformer (GPS → pixels)
+            transformer: Centerline coordinate transformer
+            track: Track object with ribbon assignments
 
         Returns:
             Dict with trajectory data for each car
         """
-        logger.info("Computing trajectories...")
+        logger.info("Computing trajectories using centerline...")
 
         self.transformer = transformer
         trajectories = {}
@@ -98,15 +102,56 @@ class TelemetryDataLoader:
                 continue
 
             # Create frame index aligned with global timeline
-            # For each global time point, get the car's data (may be NaN if car not present)
             car_indexed = car_data.set_index('time_global').reindex(unique_times)
 
-            # Extract GPS coordinates
-            lats = car_indexed['gps_lat'].values
-            lons = car_indexed['gps_lon'].values
+            # Get ribbon assignment for this car
+            ribbon_name = track.get_ribbon_for_car(car_id)
+            logger.debug(f"  Car {car_id} assigned to ribbon: {ribbon_name}")
 
-            # Transform to pixel coordinates
-            x_pixels, y_pixels = transformer.transform(lats, lons)
+            # Check if this car has any position data at all
+            has_track_dist = 'track_distance_m' in car_indexed.columns and not car_indexed['track_distance_m'].isna().all()
+            has_gps = ('gps_lat' in car_indexed.columns and 'gps_lon' in car_indexed.columns and
+                       not (car_indexed['gps_lat'].isna().all() or car_indexed['gps_lon'].isna().all()))
+
+            if not has_track_dist and not has_gps:
+                logger.warning(f"  Car {car_id}: No position data available (skipping)")
+                continue
+
+            # Use hybrid approach: prefer track_distance_m, fallback to GPS per-row
+            x_coords = []
+            y_coords = []
+
+            # Get both data sources if available
+            distances = car_indexed['track_distance_m'].values if has_track_dist else [np.nan] * len(car_indexed)
+            lats = car_indexed['gps_lat'].values if has_gps else [np.nan] * len(car_indexed)
+            lons = car_indexed['gps_lon'].values if has_gps else [np.nan] * len(car_indexed)
+
+            # Process each frame, using track_distance if available, GPS otherwise
+            used_track_dist = 0
+            used_gps = 0
+
+            for dist, lat, lon in zip(distances, lats, lons):
+                # Prefer track_distance_m (more accurate)
+                if not pd.isna(dist):
+                    x, y = transformer.distance_to_xy(dist, ribbon_name)
+                    x_coords.append(x)
+                    y_coords.append(y)
+                    used_track_dist += 1
+                # Fallback to GPS
+                elif not pd.isna(lat) and not pd.isna(lon):
+                    x, y = transformer.gps_to_xy(lat, lon, ribbon_name)
+                    x_coords.append(x)
+                    y_coords.append(y)
+                    used_gps += 1
+                # No position data for this frame
+                else:
+                    x_coords.append(np.nan)
+                    y_coords.append(np.nan)
+
+            x_meters = np.array(x_coords)
+            y_meters = np.array(y_coords)
+
+            logger.info(f"  Car {car_id}: Used track_distance for {used_track_dist} frames, GPS for {used_gps} frames")
 
             # Extract telemetry (for future hover tooltips)
             speed = car_indexed['speed'].values if 'speed' in car_indexed.columns else np.full(len(car_indexed), np.nan)
@@ -116,20 +161,21 @@ class TelemetryDataLoader:
 
             # Store as lists (JSON-serializable for dcc.Store)
             trajectories[car_id] = {
-                'x': x_pixels.tolist(),
-                'y': y_pixels.tolist(),
+                'x': x_meters.tolist(),
+                'y': y_meters.tolist(),
                 'speed': speed.tolist(),
                 'gear': gear.tolist(),
                 'aps': aps.tolist(),
                 'lap': lap.tolist(),
                 'color': config.CAR_COLORS.get(car_id, '#888888'),
                 'car_no': car_indexed['car_no'].iloc[0] if 'car_no' in car_indexed.columns else car_id,
+                'ribbon': ribbon_name,
             }
 
             # Count valid positions (non-NaN)
-            valid_count = (~np.isnan(x_pixels)).sum()
+            valid_count = (~np.isnan(x_meters)).sum()
             logger.info(f"  {car_id}: {valid_count:,}/{self.frame_count:,} valid positions "
-                       f"({valid_count/self.frame_count*100:.1f}%)")
+                       f"({valid_count/self.frame_count*100:.1f}%) on {ribbon_name}")
 
         self.trajectories = trajectories
         return trajectories
@@ -143,11 +189,14 @@ class TelemetryDataLoader:
         if not self.trajectories:
             raise ValueError("Trajectories not computed. Call compute_trajectories first.")
 
+        # Only return cars that have valid trajectories (some may be skipped)
+        valid_car_ids = [car_id for car_id in self.car_ids if car_id in self.trajectories]
+
         return {
             'trajectories': self.trajectories,
             'frame_count': self.frame_count,
             'time_labels': self.time_labels,
-            'car_ids': self.car_ids,
+            'car_ids': valid_car_ids,
         }
 
     def get_gps_bounds(self) -> Tuple[float, float, float, float]:
@@ -176,45 +225,47 @@ class TelemetryDataLoader:
 
 def load_and_prepare_data(
     parquet_path: Path,
-    track_image_path: Path,
+    track_name: str,
     car_ids: List[str]
-) -> Tuple[Dict, TrackCoordinateTransformer]:
-    """Load telemetry data and prepare for visualization.
+) -> Tuple[Dict, CenterlineTransformer, Track]:
+    """Load telemetry data and prepare for visualization using centerline.
 
     Convenience function that handles the full data loading pipeline.
 
     Args:
         parquet_path: Path to synchronized parquet file
-        track_image_path: Path to track image
+        track_name: Name of track (e.g., 'barber')
         car_ids: List of chassis IDs to load
 
     Returns:
-        (store_data, transformer) tuple
+        (store_data, transformer, track) tuple
     """
-    # Load data
+    # Load track
+    track_dir = config.TRACKS_DIR / track_name
+    track = Track(track_dir)
+
+    # Ensure track is processed (auto-generate if missing)
+    if track.ensure_processed():
+        logger.warning(f"Track '{track_name}' was not processed, auto-generated files")
+
+    # Load track geometry
+    track.load_geometry()
+
+    # Load telemetry data
     loader = TelemetryDataLoader(parquet_path, car_ids)
     loader.load_parquet()
 
-    # Get GPS bounds from data
+    # Get GPS bounds from telemetry data for calibration
     lat_min, lat_max, lon_min, lon_max = loader.get_gps_bounds()
+    logger.info(f"GPS bounds from telemetry: lat=[{lat_min:.6f}, {lat_max:.6f}], lon=[{lon_min:.6f}, {lon_max:.6f}]")
 
-    # Initialize transformer
-    transformer = TrackCoordinateTransformer(
-        track_image_path,
-        gps_bounds=(lat_min, lat_max, lon_min, lon_max),
-        padding=config.TRACK_PADDING
-    )
+    # Initialize centerline transformer with GPS calibration
+    transformer = CenterlineTransformer(track, gps_bounds=(lat_min, lat_max, lon_min, lon_max))
 
-    # Set bounds and compute transform
-    transformer.set_bounds_from_data(
-        loader.df['gps_lat'].values,
-        loader.df['gps_lon'].values
-    )
-
-    # Compute trajectories
-    loader.compute_trajectories(transformer)
+    # Compute trajectories using centerline
+    loader.compute_trajectories(transformer, track)
 
     # Get data for dcc.Store
     store_data = loader.get_store_data()
 
-    return store_data, transformer
+    return store_data, transformer, track

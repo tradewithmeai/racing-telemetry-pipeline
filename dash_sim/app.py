@@ -29,39 +29,52 @@ logger.info("RACE REPLAY DASHBOARD - INITIALIZING")
 logger.info("=" * 60)
 
 try:
-    store_data, transformer = load_and_prepare_data(
+    store_data, transformer, track = load_and_prepare_data(
         config.PARQUET_PATH,
-        config.TRACK_IMAGE,
+        config.CURRENT_TRACK,
         config.DEFAULT_CARS
     )
-    img_width, img_height = transformer.get_image_dimensions()
+    # Get track bounds for visualization scaling
+    x_min, x_max, y_min, y_max = transformer.get_bounds()
     logger.info(f"Data loaded successfully: {store_data['frame_count']:,} frames")
+    logger.info(f"Track bounds: x=[{x_min:.1f}, {x_max:.1f}], y=[{y_min:.1f}, {y_max:.1f}]")
 except Exception as e:
     logger.error(f"Failed to load data: {e}")
     raise
 
 
 def create_initial_figure():
-    """Create initial Plotly figure with track background and car traces."""
+    """Create initial Plotly figure with track centerline, ribbons, and car traces."""
     fig = go.Figure()
 
-    # Add track background image
-    fig.add_layout_image(
-        dict(
-            source="/assets/track.png",  # Dash automatically serves from assets/
-            xref="x",
-            yref="y",
-            x=0,
-            y=img_height,
-            sizex=img_width,
-            sizey=img_height,
-            sizing="stretch",
-            opacity=1.0,
-            layer="below"
-        )
-    )
+    # Add ribbon traces (thin, low opacity)
+    for ribbon in track.ribbons['ribbons']:
+        if ribbon['name'] == 'center':
+            # Centerline: white, thicker, higher opacity
+            fig.add_trace(go.Scattergl(
+                x=[pt[0] for pt in ribbon['xy']],
+                y=[pt[1] for pt in ribbon['xy']],
+                mode='lines',
+                line=dict(width=2, color='white'),
+                opacity=0.6,
+                name='Track Centerline',
+                showlegend=False,
+                hoverinfo='skip'
+            ))
+        else:
+            # Ribbons: gray, thin, low opacity
+            fig.add_trace(go.Scattergl(
+                x=[pt[0] for pt in ribbon['xy']],
+                y=[pt[1] for pt in ribbon['xy']],
+                mode='lines',
+                line=dict(width=1, color='gray'),
+                opacity=0.2,
+                name=ribbon['name'],
+                showlegend=False,
+                hoverinfo='skip'
+            ))
 
-    # Add initial car traces (one scatter trace per car)
+    # Add car marker traces (one scatter trace per car)
     for car_id in store_data['car_ids']:
         traj = store_data['trajectories'][car_id]
 
@@ -87,25 +100,31 @@ def create_initial_figure():
             ),
             hovertemplate=(
                 f"<b>Car {traj['car_no']}</b><br>" +
-                "Position: (%{x:.0f}, %{y:.0f})<br>" +
+                f"Ribbon: {traj.get('ribbon', 'N/A')}<br>" +
+                "Position: (%{x:.0f}m, %{y:.0f}m)<br>" +
                 "<extra></extra>"
             )
         ))
 
+    # Add padding to bounds
+    padding = 50  # meters
+    x_range = [x_min - padding, x_max + padding]
+    y_range = [y_min - padding, y_max + padding]
+
     # Configure layout
     fig.update_xaxes(
-        range=[0, img_width],
+        range=x_range,
         showticklabels=False,
         showgrid=False,
         zeroline=False,
     )
 
     fig.update_yaxes(
-        range=[0, img_height],
+        range=y_range,
         showticklabels=False,
         showgrid=False,
         zeroline=False,
-        scaleanchor="x",
+        scaleanchor="x",  # Maintain equal aspect ratio
         scaleratio=1,
     )
 
@@ -241,6 +260,32 @@ def control_playback(play_clicks, pause_clicks, slider_value, speed, state):
 
 
 @app.callback(
+    Output('track-graph', 'figure'),
+    Input('frame-slider', 'value'),
+    State('store-trajectories', 'data'),
+    State('track-graph', 'figure'),
+    prevent_initial_call=True
+)
+def update_graph_on_slider(frame_idx, traj_data, current_fig):
+    """Update car positions when slider is moved (for manual scrubbing)."""
+    if current_fig is None:
+        return dash.no_update
+
+    # Update each trace with new positions
+    for idx, car_id in enumerate(traj_data['car_ids']):
+        traj = traj_data['trajectories'][car_id]
+        x = traj['x'][frame_idx]
+        y = traj['y'][frame_idx]
+
+        # Only update if position is valid
+        if x is not None and y is not None and not (isinstance(x, float) and (x != x or y != y)):  # Check for NaN
+            current_fig['data'][idx]['x'] = [x]
+            current_fig['data'][idx]['y'] = [y]
+
+    return current_fig
+
+
+@app.callback(
     Output('frame-info', 'children'),
     Input('store-state', 'data'),
     Input('store-trajectories', 'data'),
@@ -253,62 +298,8 @@ def update_frame_info(state, traj_data):
     return f"Frame: {frame:,} / {total:,} | Time: {int(time_sec // 60)}:{int(time_sec % 60):02d}"
 
 
-# Client-side callback for smooth animation
-app.clientside_callback(
-    """
-    function(n_intervals, state, trajectories) {
-        if (!state.playing) {
-            return window.dash_clientside.no_update;
-        }
-
-        // Advance frame
-        let newFrame = state.frame + Math.round(state.speed);
-        if (newFrame >= trajectories.frame_count) {
-            newFrame = 0;  // Loop
-        }
-
-        // Update slider
-        const sliderUpdate = newFrame;
-
-        // Get current graph element
-        const graphDiv = document.getElementById('track-graph');
-        if (!graphDiv || !graphDiv.data) {
-            return [sliderUpdate, state];
-        }
-
-        // Prepare update data for each trace
-        const update = {x: [], y: []};
-
-        trajectories.car_ids.forEach((carId, idx) => {
-            const traj = trajectories.trajectories[carId];
-            const x = traj.x[newFrame];
-            const y = traj.y[newFrame];
-
-            // Only update if position is valid (not null/NaN)
-            if (x !== null && y !== null && !isNaN(x) && !isNaN(y)) {
-                update.x.push([x]);
-                update.y.push([y]);
-            } else {
-                // Keep previous position if current is invalid
-                if (graphDiv.data[idx] && graphDiv.data[idx].x && graphDiv.data[idx].x.length > 0) {
-                    update.x.push([graphDiv.data[idx].x[0]]);
-                    update.y.push([graphDiv.data[idx].y[0]]);
-                } else {
-                    update.x.push([0]);
-                    update.y.push([0]);
-                }
-            }
-        });
-
-        // Update all traces
-        Plotly.update('track-graph', update, {}, Array.from({length: trajectories.car_ids.length}, (_, i) => i));
-
-        // Update state
-        state.frame = newFrame;
-
-        return [sliderUpdate, state];
-    }
-    """,
+# Server-side animation callback (simpler, easier to debug than client-side)
+@app.callback(
     Output('frame-slider', 'value'),
     Output('store-state', 'data', allow_duplicate=True),
     Input('ticker', 'n_intervals'),
@@ -316,6 +307,20 @@ app.clientside_callback(
     State('store-trajectories', 'data'),
     prevent_initial_call=True
 )
+def animate_frame(n_intervals, state, traj_data):
+    """Advance frame when playing."""
+    if not state.get('playing', False):
+        raise dash.exceptions.PreventUpdate
+
+    # Advance frame
+    new_frame = state['frame'] + int(state.get('speed', 1))
+    if new_frame >= traj_data['frame_count']:
+        new_frame = 0  # Loop back to start
+
+    # Update state
+    state['frame'] = new_frame
+
+    return new_frame, state
 
 
 @app.callback(
