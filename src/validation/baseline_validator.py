@@ -132,6 +132,11 @@ def check_sample_counts(
     Compares non-null counts per column against baseline signal counts.
     Catches: Duplicate removal bugs, pivot data loss.
 
+    Stage-aware validation:
+    - pivot: Check sample counts (±10%) - detects data loss during pivot
+    - resample: SKIP this check - resampling changes sample counts by design
+    - sync: SKIP this check - synchronization changes sample counts by design
+
     Args:
         df: DataFrame to validate
         baseline: Car baseline dict
@@ -139,9 +144,14 @@ def check_sample_counts(
         threshold_pct: Maximum allowed delta percentage
 
     Returns:
-        List of ValidationCheck objects
+        List of ValidationCheck objects (empty list if stage is resample/sync)
     """
     checks = []
+
+    # Sample count check is only meaningful for pivot stage
+    # Resample/sync intentionally change sample counts to create uniform grids
+    if stage.lower() not in ["pivot"]:
+        return checks  # Skip this check for other stages
 
     # Map processed column names to baseline signal names
     column_mapping = {
@@ -260,9 +270,38 @@ def check_time_coverage(
     )
 
 
+def _expected_pivot_coverage(baseline_car: Dict, baseline_signal_name: str) -> float:
+    """Compute expected coverage for a signal at pivot stage.
+
+    At pivot, signals with different sampling rates will have different coverage.
+    A 4Hz signal in a 20Hz grid will be ~20% present.
+
+    Args:
+        baseline_car: Car baseline dict with signals
+        baseline_signal_name: Signal name to compute expected coverage for
+
+    Returns:
+        Expected coverage percentage based on sampling rate ratio
+    """
+    signals = baseline_car["signals"]
+
+    if baseline_signal_name not in signals:
+        return 0.0
+
+    # Get this signal's Hz
+    hz_sig = signals[baseline_signal_name]["hz_avg"]
+
+    # Get max Hz across all signals (reference grid rate)
+    hz_ref = max(s["hz_avg"] for s in signals.values()) if signals else 0.0
+
+    # Expected coverage = ratio of sampling rates
+    return (100.0 * hz_sig / hz_ref) if hz_ref > 0 else 0.0
+
+
 def check_signal_presence(
     df: pd.DataFrame,
     baseline: Dict,
+    stage: str,
     threshold_pct: float = 5.0,
 ) -> List[ValidationCheck]:
     """Check #4: Signal presence (±5%).
@@ -270,10 +309,15 @@ def check_signal_presence(
     Validates that critical signal coverage is preserved.
     Catches: Column stripping (GPS 100% → 0% bug).
 
+    Stage-aware validation:
+    - pivot: Compare against expected coverage based on sampling rate ratios (±10pp)
+    - resample/sync: Compare against strict 100% coverage (±5pp)
+
     Args:
         df: DataFrame to validate
         baseline: Car baseline dict
-        threshold_pct: Maximum allowed delta percentage
+        stage: Pipeline stage name (pivot, resample, sync, etc.)
+        threshold_pct: Maximum allowed delta percentage (default 5.0)
 
     Returns:
         List of ValidationCheck objects
@@ -301,8 +345,17 @@ def check_signal_presence(
         if signal_name not in baseline["signals"]:
             continue
 
-        # Baseline coverage (should be ~100% for most signals)
-        baseline_coverage = baseline["signals"][signal_name]["coverage_pct"]
+        # Stage-aware baseline coverage and threshold
+        if stage.lower() == "pivot":
+            # At pivot, expect coverage based on sampling rate ratio
+            baseline_coverage = _expected_pivot_coverage(baseline, signal_name)
+            allowed_threshold = 10.0  # More tolerant at pivot (±10pp)
+            stage_note = f"at {stage}"
+        else:
+            # Post-resample/sync, expect strict coverage (interpolation fills gaps)
+            baseline_coverage = baseline["signals"][signal_name]["coverage_pct"]
+            allowed_threshold = threshold_pct  # Strict (±5pp)
+            stage_note = f"at {stage}"
 
         # Actual coverage
         actual_coverage = 100.0 * df[col_name].notna().sum() / total_rows if total_rows > 0 else 0
@@ -311,22 +364,22 @@ def check_signal_presence(
         delta_pct = actual_coverage - baseline_coverage
 
         # Determine status
-        if abs(delta_pct) <= threshold_pct:
+        if abs(delta_pct) <= allowed_threshold:
             status = "PASS"
-            message = f"{col_name}: {actual_coverage:.1f}% coverage (baseline: {baseline_coverage:.1f}%, {delta_pct:+.1f}pp)"
+            message = f"{col_name}: {actual_coverage:.1f}% (expected ~{baseline_coverage:.1f}% {stage_note}, {delta_pct:+.1f}pp, threshold ±{allowed_threshold}pp)"
         elif delta_pct < 0:
             status = "FAIL"
-            message = f"{col_name}: Coverage dropped from {baseline_coverage:.1f}% to {actual_coverage:.1f}% ({delta_pct:.1f}pp, threshold: ±{threshold_pct}pp)"
+            message = f"{col_name}: Coverage {actual_coverage:.1f}% vs expected {baseline_coverage:.1f}% {stage_note} ({delta_pct:.1f}pp, threshold: ±{allowed_threshold}pp)"
         else:
             status = "PASS"  # Higher coverage is good
-            message = f"{col_name}: {actual_coverage:.1f}% coverage (baseline: {baseline_coverage:.1f}%, {delta_pct:+.1f}pp)"
+            message = f"{col_name}: {actual_coverage:.1f}% (expected ~{baseline_coverage:.1f}% {stage_note}, {delta_pct:+.1f}pp)"
 
         checks.append(ValidationCheck(
             check_name=f"presence_{col_name}",
             baseline_value=baseline_coverage,
             actual_value=actual_coverage,
             delta_pct=delta_pct,
-            threshold_pct=threshold_pct,
+            threshold_pct=allowed_threshold,
             status=status,
             message=message,
         ))
@@ -393,8 +446,8 @@ def validate_against_baseline(
     else:
         logger.info(f"  PASS: {time_check.message}")
 
-    logger.info("\n[Check 4] Signal Presence (±5%)")
-    presence_checks = check_signal_presence(df, car_baseline, threshold_pct=5.0)
+    logger.info("\n[Check 4] Signal Presence (stage-aware)")
+    presence_checks = check_signal_presence(df, car_baseline, stage, threshold_pct=5.0)
     for check in presence_checks:
         result.add_check(check)
         if check.status == "FAIL":
