@@ -9,7 +9,7 @@ import argparse
 import sys
 
 import config
-from data_loader import load_and_prepare_data
+from data_loader_simple import load_ribbons, load_telemetry_simple, prepare_trajectories
 
 # Setup logging
 logging.basicConfig(
@@ -59,17 +59,27 @@ logger.info("=" * 60)
 logger.info("RACE REPLAY DASHBOARD - INITIALIZING")
 logger.info("=" * 60)
 logger.info(f"Parquet: {PARQUET_PATH}")
-logger.info(f"Track: {CURRENT_TRACK}")
+logger.info(f"Ribbons: {config.RIBBONS_FILE}")
 logger.info(f"Cars: {DEFAULT_CARS}")
 
 try:
-    store_data, transformer, track = load_and_prepare_data(
-        PARQUET_PATH,
-        CURRENT_TRACK,
-        DEFAULT_CARS
-    )
-    # Get track bounds for visualization scaling
-    x_min, x_max, y_min, y_max = transformer.get_bounds()
+    # Load ribbons
+    import numpy as np
+    ribbons_data = load_ribbons(config.RIBBONS_FILE)
+    logger.info(f"Loaded {len(ribbons_data['ribbons'])} ribbons")
+
+    # Load telemetry
+    df = load_telemetry_simple(PARQUET_PATH, DEFAULT_CARS)
+
+    # Prepare trajectories
+    store_data = prepare_trajectories(df, ribbons_data, config.DEFAULT_RIBBON_BY_CAR)
+    logger.info(f"Prepared {len(store_data['car_ids'])} car trajectories")
+
+    # Get bounds for visualization
+    center_ribbon = next(r for r in ribbons_data['ribbons'] if r['name'] == 'center')
+    points = np.array(center_ribbon['xy'])
+    x_min, x_max = points[:, 0].min(), points[:, 0].max()
+    y_min, y_max = points[:, 1].min(), points[:, 1].max()
     logger.info(f"Data loaded successfully: {store_data['frame_count']:,} frames")
     logger.info(f"Track bounds: x=[{x_min:.1f}, {x_max:.1f}], y=[{y_min:.1f}, {y_max:.1f}]")
 except Exception as e:
@@ -82,7 +92,7 @@ def create_initial_figure():
     fig = go.Figure()
 
     # Add ribbon traces (thin, low opacity)
-    for ribbon in track.ribbons['ribbons']:
+    for ribbon in ribbons_data['ribbons']:
         if ribbon['name'] == 'center':
             # Centerline: white, thicker, higher opacity
             fig.add_trace(go.Scattergl(
