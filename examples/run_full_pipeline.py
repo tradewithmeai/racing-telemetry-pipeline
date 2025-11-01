@@ -36,7 +36,7 @@ from src.transform import (
     pivot_to_wide_format,
     save_pivot_stats,
     # Resample
-    resample_to_time_grid,
+    resample_with_interpolation,
     save_resample_stats,
     # Sync
     synchronize_multi_car,
@@ -254,16 +254,16 @@ def run_pipeline(
             # Stage 4: Position normalization (now on wide format with GPS columns)
             df_wide = apply_position_normalization(df_wide, chassis_id)
 
-            # Stage 5: Resample to 20Hz
+            # Stage 5: Resample to 20Hz with interpolation and derived speed
             logger.info(f"\n[STAGE 5: RESAMPLE] {chassis_id}")
             logger.info("="*60)
 
-            df_resampled, resample_stat = resample_to_time_grid(
+            df_resampled, resample_stat = resample_with_interpolation(
                 df=df_wide,
                 chassis_id=chassis_id,
                 time_col='time_corrected',
                 freq_hz=20.0,
-                ffill_limit_sec=0.2,
+                interpolation_method='linear',
                 max_gap_sec=2.0,
             )
 

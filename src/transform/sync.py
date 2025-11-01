@@ -171,8 +171,14 @@ def align_car_to_global_grid(
     if "chassis_id" not in df_aligned.columns or df_aligned["chassis_id"].isnull().all():
         df_aligned["chassis_id"] = chassis_id
 
-    # Count presence
-    frames_present = df_aligned["speed"].notna().sum() if "speed" in df_aligned.columns else 0
+    # Count presence using speed_final (fallback to speed if not available)
+    if "speed_final" in df_aligned.columns:
+        frames_present = df_aligned["speed_final"].notna().sum()
+    elif "speed" in df_aligned.columns:
+        frames_present = df_aligned["speed"].notna().sum()
+    else:
+        frames_present = 0
+
     frames_total = len(df_aligned)
     coverage = (frames_present / frames_total * 100) if frames_total > 0 else 0
 
@@ -241,8 +247,14 @@ def synchronize_multi_car(
 
         aligned_dfs.append(df_aligned)
 
-        # Track coverage
-        frames_present = df_aligned["speed"].notna().sum() if "speed" in df_aligned.columns else 0
+        # Track coverage using speed_final (fallback to speed if not available)
+        if "speed_final" in df_aligned.columns:
+            frames_present = df_aligned["speed_final"].notna().sum()
+        elif "speed" in df_aligned.columns:
+            frames_present = df_aligned["speed"].notna().sum()
+        else:
+            frames_present = 0
+
         coverage_pct = (frames_present / total_frames * 100) if total_frames > 0 else 0
 
         # Find first and last frame times
