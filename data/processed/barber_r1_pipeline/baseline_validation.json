@@ -1,0 +1,111 @@
+{
+  "event_name": "barber_r1_pipeline",
+  "generated_at": "2025-11-01T19:36:51.618115",
+  "overall_status": "PASS",
+  "cars": {
+    "010": {
+      "stage": "resample",
+      "chassis_id": "010",
+      "overall_status": "PASS",
+      "checks": [
+        {
+          "check_name": "time_coverage",
+          "baseline_value": 2697.99,
+          "actual_value": 2697.9,
+          "delta_pct": -0.003335816663504712,
+          "threshold_pct": 1.0,
+          "status": "PASS",
+          "message": "Time span: 45.0 min (baseline: 45.0 min, -0.00%)"
+        },
+        {
+          "check_name": "presence_gps_lat",
+          "baseline_value": 100.0,
+          "actual_value": 99.97776089252952,
+          "delta_pct": -0.022239107470483077,
+          "threshold_pct": 5.0,
+          "status": "PASS",
+          "message": "gps_lat: 100.0% (expected ~100.0% at resample, -0.0pp, threshold \u00b15.0pp)"
+        },
+        {
+          "check_name": "presence_gps_lon",
+          "baseline_value": 100.0,
+          "actual_value": 99.97776089252952,
+          "delta_pct": -0.022239107470483077,
+          "threshold_pct": 5.0,
+          "status": "PASS",
+          "message": "gps_lon: 100.0% (expected ~100.0% at resample, -0.0pp, threshold \u00b15.0pp)"
+        },
+        {
+          "check_name": "presence_track_distance_m",
+          "baseline_value": 100.0,
+          "actual_value": 98.82503382197595,
+          "delta_pct": -1.1749661780240501,
+          "threshold_pct": 5.0,
+          "status": "PASS",
+          "message": "track_distance_m: 98.8% (expected ~100.0% at resample, -1.2pp, threshold \u00b15.0pp)"
+        },
+        {
+          "check_name": "presence_speed_final",
+          "baseline_value": 100.0,
+          "actual_value": 98.83059359884356,
+          "delta_pct": -1.1694064011564365,
+          "threshold_pct": 5.0,
+          "status": "PASS",
+          "message": "speed_final: 98.8% (expected ~100.0% at resample, -1.2pp, threshold \u00b15.0pp)"
+        }
+      ]
+    },
+    "002": {
+      "stage": "resample",
+      "chassis_id": "002",
+      "overall_status": "PASS",
+      "checks": [
+        {
+          "check_name": "time_coverage",
+          "baseline_value": 421.64,
+          "actual_value": 421.65,
+          "delta_pct": 0.0023716914903687755,
+          "threshold_pct": 1.0,
+          "status": "PASS",
+          "message": "Time span: 7.0 min (baseline: 7.0 min, +0.00%)"
+        },
+        {
+          "check_name": "presence_gps_lat",
+          "baseline_value": 100.0,
+          "actual_value": 99.96442968935263,
+          "delta_pct": -0.035570310647372594,
+          "threshold_pct": 5.0,
+          "status": "PASS",
+          "message": "gps_lat: 100.0% (expected ~100.0% at resample, -0.0pp, threshold \u00b15.0pp)"
+        },
+        {
+          "check_name": "presence_gps_lon",
+          "baseline_value": 100.0,
+          "actual_value": 99.96442968935263,
+          "delta_pct": -0.035570310647372594,
+          "threshold_pct": 5.0,
+          "status": "PASS",
+          "message": "gps_lon: 100.0% (expected ~100.0% at resample, -0.0pp, threshold \u00b15.0pp)"
+        },
+        {
+          "check_name": "presence_track_distance_m",
+          "baseline_value": 100.0,
+          "actual_value": 99.51387242115248,
+          "delta_pct": -0.48612757884751545,
+          "threshold_pct": 5.0,
+          "status": "PASS",
+          "message": "track_distance_m: 99.5% (expected ~100.0% at resample, -0.5pp, threshold \u00b15.0pp)"
+        },
+        {
+          "check_name": "presence_speed_final",
+          "baseline_value": 100.0,
+          "actual_value": 99.53758596158407,
+          "delta_pct": -0.462414038415929,
+          "threshold_pct": 5.0,
+          "status": "PASS",
+          "message": "speed_final: 99.5% (expected ~100.0% at resample, -0.5pp, threshold \u00b15.0pp)"
+        }
+      ]
+    }
+  }
+}

@@ -336,6 +336,7 @@ def update_graph_on_slider(frame_idx, traj_data, current_fig):
     ribbon_count = len(ribbons_data['ribbons'])
 
     # Update each car trace with new positions
+    updated = 0
     for idx, car_id in enumerate(traj_data['car_ids']):
         traj = traj_data['trajectories'][car_id]
         x = traj['x'][frame_idx]
@@ -348,6 +349,10 @@ def update_graph_on_slider(frame_idx, traj_data, current_fig):
                 trace_idx = ribbon_count + idx  # Offset by number of ribbons
                 current_fig['data'][trace_idx]['x'] = [x]
                 current_fig['data'][trace_idx]['y'] = [y]
+                updated += 1
+
+    if frame_idx % 20 == 0:  # Log every 20 frames
+        logger.info(f"  Updated {updated} cars at frame {frame_idx}")
 
     return current_fig
 
@@ -376,7 +381,10 @@ def update_frame_info(state, traj_data):
 )
 def animate_frame(n_intervals, current_frame, state, traj_data):
     """Advance frame when playing."""
+    logger.info(f"animate_frame: n_intervals={n_intervals}, current_frame={current_frame}, playing={state.get('playing')}")
+
     if not state.get('playing', False):
+        logger.info("  Not playing, preventing update")
         raise dash.exceptions.PreventUpdate
 
     # Advance frame from current slider position (source of truth)
@@ -385,9 +393,7 @@ def animate_frame(n_intervals, current_frame, state, traj_data):
     if new_frame >= traj_data['frame_count']:
         new_frame = 0  # Loop back to start
 
-    if new_frame % 100 == 0:  # Log every 100 frames
-        logger.info(f"Frame: {new_frame}")
-
+    logger.info(f"  Returning new_frame={new_frame}")
     return new_frame
 
 

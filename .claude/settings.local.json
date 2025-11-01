@@ -18,7 +18,16 @@
       "Bash(NUL)",
       "Bash(timeout 5 python:*)",
       "Bash(powershell -Command:*)",
-      "Bash(.gitignore)"
+      "Bash(.gitignore)",
+      "Bash(nul)",
+      "Bash(timeout 120 python:*)",
+      "Bash(pipeline_010.log)",
+      "Bash(pipeline_both.log)",
+      "Bash(git restore:*)",
+      "Bash(timeout 60 python:*)",
+      "Bash(timeout 30 python:*)",
+      "Bash(\"D:\\Documents\\Toyota Gazoo Motorsport\\data-validation-automation-station\\dash_sim\\.gitignore\")",
+      "Bash(echo:*)"
     ],
     "deny": [],
     "ask": []

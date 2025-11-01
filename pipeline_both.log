@@ -1,0 +1,638 @@
+Warning: GPU requested but RAPIDS not available. Falling back to CPU.
+2025-11-01 19:36:23,330 - full_pipeline - INFO - 
+============================================================
+2025-11-01 19:36:23,330 - full_pipeline - INFO - FULL PIPELINE: END-TO-END PROCESSING
+2025-11-01 19:36:23,330 - full_pipeline - INFO - ============================================================
+2025-11-01 19:36:23,331 - full_pipeline - INFO -   Event: barber_r1
+2025-11-01 19:36:23,331 - full_pipeline - INFO -   Cars: ['010', '002']
+2025-11-01 19:36:23,331 - full_pipeline - INFO -   Output: barber_r1_pipeline
+2025-11-01 19:36:23,331 - full_pipeline - INFO -   Baseline validation: STRICT
+2025-11-01 19:36:23,331 - full_pipeline - INFO - ============================================================
+
+2025-11-01 19:36:23,332 - full_pipeline - INFO - 
+############################################################
+2025-11-01 19:36:23,332 - full_pipeline - INFO - # PROCESSING CHASSIS 010
+2025-11-01 19:36:23,332 - full_pipeline - INFO - ############################################################
+
+2025-11-01 19:36:23,332 - full_pipeline - INFO - Loading raw curated data for chassis 010...
+2025-11-01 19:36:23,334 - full_pipeline - INFO -   Found 24 parquet files
+2025-11-01 19:36:23,895 - full_pipeline - INFO -   Loaded 585,728 rows
+2025-11-01 19:36:23,908 - full_pipeline - INFO - 
+[STAGE 1: TIME SYNC] 010
+2025-11-01 19:36:23,908 - full_pipeline - INFO - ============================================================
+2025-11-01 19:36:24,061 - src.transform.drift - INFO - Computing windowed drift for 010 (window=5min)
+2025-11-01 19:36:24,094 - src.transform.drift - INFO -   010: 10 windows
+2025-11-01 19:36:24,094 - src.transform.drift - INFO -   Valid calibrations: 10/10
+2025-11-01 19:36:24,094 - src.transform.drift - INFO -   Clock steps detected: 2
+2025-11-01 19:36:24,094 - src.transform.drift - INFO -   Average drift: 147565.076s ± 4.116s
+2025-11-01 19:36:24,094 - full_pipeline - INFO -   Calibrated 10 time windows
+2025-11-01 19:36:24,190 - full_pipeline - INFO -   Applied drift correction to 585,728 rows
+2025-11-01 19:36:24,211 - full_pipeline - INFO - 
+[STAGE 2: LAP REPAIR] 010
+2025-11-01 19:36:24,211 - full_pipeline - INFO - ============================================================
+2025-11-01 19:36:24,211 - src.transform.lap_repair - INFO - =============================================================
+2025-11-01 19:36:24,211 - src.transform.lap_repair - INFO - Lap Repair Pipeline: 010
+2025-11-01 19:36:24,211 - src.transform.lap_repair - INFO - =============================================================
+2025-11-01 19:36:24,211 - src.transform.lap_repair - INFO - Detecting lap boundaries for 010
+2025-11-01 19:36:24,321 - src.transform.lap_repair - INFO -   Found 27 candidate boundaries
+2025-11-01 19:36:24,322 - src.transform.lap_repair - INFO -     - From lapdist resets: 0
+2025-11-01 19:36:24,322 - src.transform.lap_repair - INFO -     - From lap increments: 27
+2025-11-01 19:36:24,324 - src.transform.lap_repair - INFO -   Validated 27 lap boundaries
+2025-11-01 19:36:24,334 - src.transform.lap_repair - INFO - Assigning lap numbers from boundaries
+2025-11-01 19:36:24,449 - src.transform.lap_repair - INFO -   Assigned lap numbers to 585,728 / 585,728 rows
+2025-11-01 19:36:24,454 - src.transform.lap_repair - INFO - 
+  Lap Repair Summary:
+2025-11-01 19:36:24,455 - src.transform.lap_repair - INFO -     Total boundaries: 27
+2025-11-01 19:36:24,455 - src.transform.lap_repair - INFO -     Unique laps: 28
+2025-11-01 19:36:24,455 - src.transform.lap_repair - INFO -     Rows with laps: 585,728 / 585,728
+2025-11-01 19:36:24,455 - src.transform.lap_repair - INFO - ============================================================
+
+2025-11-01 19:36:24,455 - full_pipeline - INFO -   Detected 27 lap boundaries
+2025-11-01 19:36:24,455 - full_pipeline - INFO -   Repaired 585,728 rows
+2025-11-01 19:36:24,467 - full_pipeline - INFO - 
+[STAGE 3: PIVOT] 010
+2025-11-01 19:36:24,467 - full_pipeline - INFO - ============================================================
+2025-11-01 19:36:24,467 - src.transform.pivot - INFO - ============================================================
+2025-11-01 19:36:24,467 - src.transform.pivot - INFO - PIVOT: 010
+2025-11-01 19:36:24,467 - src.transform.pivot - INFO - ============================================================
+2025-11-01 19:36:24,484 - src.transform.pivot - INFO -   Input: 585,728 rows, 12 unique signals
+2025-11-01 19:36:24,484 - src.transform.pivot - INFO -   Time column: time_corrected
+2025-11-01 19:36:24,485 - src.transform.pivot - INFO -   Preserving columns: ['chassis_id', 'car_no', 'lap_repaired', 'segment_id']
+2025-11-01 19:36:24,501 - src.transform.pivot - INFO -   Identified 12 unique signals
+2025-11-01 19:36:24,501 - src.transform.pivot - INFO - 
+  [Step 1] Pivoting to wide format...
+2025-11-01 19:36:24,834 - src.transform.pivot - INFO -   Output: 60,946 rows, 12 signals as columns
+2025-11-01 19:36:24,835 - src.transform.pivot - INFO - 
+  [Step 2] Processing position data...
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Users\richw\AppData\Local\Programs\Python\Python312\Lib\logging\__init__.py", line 1163, in emit
+    stream.write(msg + self.terminator)
+  File "C:\Users\richw\AppData\Local\Programs\Python\Python312\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2192' in position 82: character maps to <undefined>
+Call stack:
+  File "D:\Documents\Toyota Gazoo Motorsport\data-validation-automation-station\examples\run_full_pipeline.py", line 477, in <module>
+    main()
+  File "D:\Documents\Toyota Gazoo Motorsport\data-validation-automation-station\examples\run_full_pipeline.py", line 466, in main
+    run_pipeline(
+  File "D:\Documents\Toyota Gazoo Motorsport\data-validation-automation-station\examples\run_full_pipeline.py", line 256, in run_pipeline
+    df_wide, pivot_stat = pivot_to_wide_format(
+  File "D:\Documents\Toyota Gazoo Motorsport\data-validation-automation-station\src\transform\pivot.py", line 146, in pivot_to_wide_format
+    logger.info(f"    Renaming: {old_name} \u2192 {new_name}")
+Message: '    Renaming: VBOX_Lat_Min \u2192 gps_lat'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Users\richw\AppData\Local\Programs\Python\Python312\Lib\logging\__init__.py", line 1163, in emit
+    stream.write(msg + self.terminator)
+  File "C:\Users\richw\AppData\Local\Programs\Python\Python312\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2192' in position 87: character maps to <undefined>
+Call stack:
+  File "D:\Documents\Toyota Gazoo Motorsport\data-validation-automation-station\examples\run_full_pipeline.py", line 477, in <module>
+    main()
+  File "D:\Documents\Toyota Gazoo Motorsport\data-validation-automation-station\examples\run_full_pipeline.py", line 466, in main
+    run_pipeline(
+  File "D:\Documents\Toyota Gazoo Motorsport\data-validation-automation-station\examples\run_full_pipeline.py", line 256, in run_pipeline
+    df_wide, pivot_stat = pivot_to_wide_format(
+  File "D:\Documents\Toyota Gazoo Motorsport\data-validation-automation-station\src\transform\pivot.py", line 146, in pivot_to_wide_format
+    logger.info(f"    Renaming: {old_name} \u2192 {new_name}")
+Message: '    Renaming: VBOX_Long_Minutes \u2192 gps_lon'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Users\richw\AppData\Local\Programs\Python\Python312\Lib\logging\__init__.py", line 1163, in emit
+    stream.write(msg + self.terminator)
+  File "C:\Users\richw\AppData\Local\Programs\Python\Python312\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2192' in position 92: character maps to <undefined>
+Call stack:
+  File "D:\Documents\Toyota Gazoo Motorsport\data-validation-automation-station\examples\run_full_pipeline.py", line 477, in <module>
+    main()
+  File "D:\Documents\Toyota Gazoo Motorsport\data-validation-automation-station\examples\run_full_pipeline.py", line 466, in main
+    run_pipeline(
+  File "D:\Documents\Toyota Gazoo Motorsport\data-validation-automation-station\examples\run_full_pipeline.py", line 256, in run_pipeline
+    df_wide, pivot_stat = pivot_to_wide_format(
+  File "D:\Documents\Toyota Gazoo Motorsport\data-validation-automation-station\src\transform\pivot.py", line 146, in pivot_to_wide_format
+    logger.info(f"    Renaming: {old_name} \u2192 {new_name}")
+Message: '    Renaming: Laptrigger_lapdist_dls \u2192 track_distance_m'
+Arguments: ()
+2025-11-01 19:36:24,848 - src.transform.pivot - INFO - 
+  [Step 3] Normalizing signal units...
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Users\richw\AppData\Local\Programs\Python\Python312\Lib\logging\__init__.py", line 1163, in emit
+    stream.write(msg + self.terminator)
+  File "C:\Users\richw\AppData\Local\Programs\Python\Python312\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2192' in position 66: character maps to <undefined>
+Call stack:
+  File "D:\Documents\Toyota Gazoo Motorsport\data-validation-automation-station\examples\run_full_pipeline.py", line 477, in <module>
+    main()
+  File "D:\Documents\Toyota Gazoo Motorsport\data-validation-automation-station\examples\run_full_pipeline.py", line 466, in main
+    run_pipeline(
+  File "D:\Documents\Toyota Gazoo Motorsport\data-validation-automation-station\examples\run_full_pipeline.py", line 256, in run_pipeline
+    df_wide, pivot_stat = pivot_to_wide_format(
+  File "D:\Documents\Toyota Gazoo Motorsport\data-validation-automation-station\src\transform\pivot.py", line 156, in pivot_to_wide_format
+    logger.info("    aps: % \u2192 [0, 1]")
+Message: '    aps: % \u2192 [0, 1]'
+Arguments: ()
+2025-11-01 19:36:24,851 - src.transform.pivot - INFO -     speed: already in m/s (mean: 131.2)
+2025-11-01 19:36:24,851 - src.transform.pivot - INFO - 
+  [Step 4] Computing signal coverage...
+2025-11-01 19:36:24,851 - src.transform.pivot - INFO -     Coverage: 12/12 signals (100.0%)
+2025-11-01 19:36:24,851 - src.transform.pivot - INFO - ============================================================
+
+2025-11-01 19:36:24,851 - src.validation.baseline_validator - INFO - 
+================================================================================
+2025-11-01 19:36:24,851 - src.validation.baseline_validator - INFO - BASELINE VALIDATION: PIVOT - Chassis 010
+2025-11-01 19:36:24,852 - src.validation.baseline_validator - INFO - ================================================================================
+2025-11-01 19:36:24,852 - src.validation.baseline_validator - INFO - 
+[Check 1] Sample Counts (±10%)
+2025-11-01 19:36:24,855 - src.validation.baseline_validator - INFO - 
+[Check 3] Time Coverage (±1%)
+2025-11-01 19:36:24,861 - src.validation.baseline_validator - INFO -   PASS: Time span: 45.0 min (baseline: 45.0 min, -0.00%)
+2025-11-01 19:36:24,861 - src.validation.baseline_validator - INFO - 
+[Check 4] Signal Presence (stage-aware)
+2025-11-01 19:36:24,862 - src.validation.baseline_validator - INFO -   PASS: gps_lat: 100.0% (expected ~100.0% at pivot, +0.0pp, threshold ±10.0pp)
+2025-11-01 19:36:24,862 - src.validation.baseline_validator - INFO -   PASS: gps_lon: 100.0% (expected ~100.0% at pivot, +0.0pp, threshold ±10.0pp)
+2025-11-01 19:36:24,862 - src.validation.baseline_validator - INFO -   PASS: track_distance_m: 20.4% (expected ~20.4% at pivot, -0.0pp, threshold ±10.0pp)
+2025-11-01 19:36:24,862 - src.validation.baseline_validator - INFO -   PASS: speed: 20.3% (expected ~20.4% at pivot, -0.0pp, threshold ±10.0pp)
+2025-11-01 19:36:24,862 - src.validation.baseline_validator - INFO - 
+================================================================================
+2025-11-01 19:36:24,862 - src.validation.baseline_validator - INFO - VALIDATION RESULT: PASS
+2025-11-01 19:36:24,862 - src.validation.baseline_validator - INFO - ================================================================================
+2025-11-01 19:36:24,862 - src.validation.baseline_validator - INFO -   Checks: 18 passed, 0 warnings, 0 failed
+2025-11-01 19:36:24,862 - full_pipeline - INFO - 
+[STAGE 3: POSITION NORMALIZATION] 010
+2025-11-01 19:36:24,862 - full_pipeline - INFO - ============================================================
+2025-11-01 19:36:24,862 - src.transform.position - INFO - ============================================================
+2025-11-01 19:36:24,862 - src.transform.position - INFO - Position Normalization: 010
+2025-11-01 19:36:24,862 - src.transform.position - INFO - ============================================================
+2025-11-01 19:36:24,869 - src.transform.position - INFO -   Circuit: Barber Motorsports Park
+2025-11-01 19:36:24,869 - src.transform.position - INFO -   GPS Bounds: Lat [33.5, 33.6], Lon [-86.65, -86.55]
+2025-11-01 19:36:24,869 - src.transform.position - INFO - 
+  [Step 1] GPS columns already present (renamed by pivot stage)...
+2025-11-01 19:36:24,869 - src.transform.position - INFO -     GPS coverage: 100.0%
+2025-11-01 19:36:24,870 - src.transform.position - INFO -     Lat range: 33.529324 to 33.535892
+2025-11-01 19:36:24,870 - src.transform.position - INFO -     Lon range: -86.624329 to -86.614517
+2025-11-01 19:36:24,870 - src.transform.position - INFO - 
+  [Step 2] Validating GPS bounds...
+2025-11-01 19:36:24,871 - src.transform.position - INFO -     All GPS points within bounds
+2025-11-01 19:36:24,871 - src.transform.position - INFO - 
+  [Step 3] Detecting GPS outliers...
+2025-11-01 19:36:24,873 - src.transform.position - INFO -     No outliers detected (jump threshold: 500.0m)
+2025-11-01 19:36:24,873 - src.transform.position - INFO - 
+  [Step 4] Interpolating sparse GPS data...
+2025-11-01 19:36:24,891 - src.transform.position - INFO -     No interpolation needed (full coverage)
+2025-11-01 19:36:24,891 - src.transform.position - INFO - 
+  [Step 5] Track distance already present (renamed by pivot stage)...
+2025-11-01 19:36:24,892 - src.transform.position - INFO -     Track distance coverage: 20.4%
+2025-11-01 19:36:24,893 - src.transform.position - INFO -     Range: 1.0m to 3710.0m
+2025-11-01 19:36:24,893 - src.transform.position - INFO - 
+  [Step 6] Computing position quality score...
+2025-11-01 19:36:24,894 - src.transform.position - INFO -     Quality score: 0.46 / 1.00
+2025-11-01 19:36:24,894 - src.transform.position - INFO - ============================================================
+
+2025-11-01 19:36:24,894 - full_pipeline - INFO -   Quality score: 0.46
+2025-11-01 19:36:24,894 - full_pipeline - INFO -   GPS coverage: 100.0%
+2025-11-01 19:36:24,895 - full_pipeline - INFO - 
+[STAGE 5: RESAMPLE] 010
+2025-11-01 19:36:24,895 - full_pipeline - INFO - ============================================================
+2025-11-01 19:36:24,895 - src.transform.resample - INFO - ============================================================
+2025-11-01 19:36:24,895 - src.transform.resample - INFO - RESAMPLE (Interpolation + Derived Speed): 010
+2025-11-01 19:36:24,895 - src.transform.resample - INFO - ============================================================
+2025-11-01 19:36:24,895 - src.transform.resample - INFO -   Input: 60,946 rows
+2025-11-01 19:36:24,895 - src.transform.resample - INFO -   Interpolation method: linear
+2025-11-01 19:36:24,895 - src.transform.resample - INFO -   Target frequency: 20.0 Hz
+2025-11-01 19:36:24,904 - src.transform.resample - INFO -   Time range: 2025-09-06 18:40:00.936000+00:00 to 2025-09-06 19:24:58.884000+00:00
+2025-11-01 19:36:24,904 - src.transform.resample - INFO -   Time span: 2697.9 seconds
+2025-11-01 19:36:24,906 - src.transform.resample - INFO - 
+  [Step 1] Creating uniform time grid...
+2025-11-01 19:36:24,907 - src.transform.resample - INFO -     Expected samples at 20.0 Hz: 53,959
+2025-11-01 19:36:24,907 - src.transform.resample - INFO - 
+  [Step 2] Reindexing to time grid...
+2025-11-01 19:36:24,912 - src.transform.resample - INFO - 
+  [Step 3] Interpolating continuous signals...
+2025-11-01 19:36:24,974 - src.transform.resample - INFO -     Interpolated 684,463 values across all columns
+2025-11-01 19:36:24,984 - src.transform.resample - INFO - 
+  [Step 4] Computing derived speed...
+2025-11-01 19:36:24,985 - src.transform.resample - INFO -     Raw speed coverage: 97.5%
+2025-11-01 19:36:24,999 - src.transform.resample - INFO -     Derived speed coverage: 98.8%
+2025-11-01 19:36:24,999 - src.transform.resample - INFO -     Final speed coverage (coalesced): 98.8%
+2025-11-01 19:36:24,999 - src.transform.resample - INFO - 
+  [Step 5] Computing simulation-ready coverage...
+2025-11-01 19:36:25,000 - src.transform.resample - INFO -     Rows after resample: 53,959
+2025-11-01 19:36:25,000 - src.transform.resample - INFO -     Actual frequency: 20.00 Hz
+2025-11-01 19:36:25,000 - src.transform.resample - INFO -     Coverage (position): 100.0%
+2025-11-01 19:36:25,000 - src.transform.resample - INFO -     Coverage (velocity): 98.8%
+2025-11-01 19:36:25,000 - src.transform.resample - INFO -     Coverage (sim-ready = pos + vel): 98.8%
+2025-11-01 19:36:25,000 - src.transform.resample - INFO - ============================================================
+
+2025-11-01 19:36:25,001 - src.validation.baseline_validator - INFO - 
+================================================================================
+2025-11-01 19:36:25,001 - src.validation.baseline_validator - INFO - BASELINE VALIDATION: RESAMPLE - Chassis 010
+2025-11-01 19:36:25,001 - src.validation.baseline_validator - INFO - ================================================================================
+2025-11-01 19:36:25,001 - src.validation.baseline_validator - INFO - 
+[Check 1] Sample Counts (±10%)
+2025-11-01 19:36:25,001 - src.validation.baseline_validator - INFO - 
+[Check 3] Time Coverage (±1%)
+2025-11-01 19:36:25,008 - src.validation.baseline_validator - INFO -   PASS: Time span: 45.0 min (baseline: 45.0 min, -0.00%)
+2025-11-01 19:36:25,008 - src.validation.baseline_validator - INFO - 
+[Check 4] Signal Presence (stage-aware)
+2025-11-01 19:36:25,009 - src.validation.baseline_validator - INFO -   PASS: gps_lat: 100.0% (expected ~100.0% at resample, -0.0pp, threshold ±5.0pp)
+2025-11-01 19:36:25,009 - src.validation.baseline_validator - INFO -   PASS: gps_lon: 100.0% (expected ~100.0% at resample, -0.0pp, threshold ±5.0pp)
+2025-11-01 19:36:25,009 - src.validation.baseline_validator - INFO -   PASS: track_distance_m: 98.8% (expected ~100.0% at resample, -1.2pp, threshold ±5.0pp)
+2025-11-01 19:36:25,009 - src.validation.baseline_validator - INFO -   PASS: speed_final: 98.8% (expected ~100.0% at resample, -1.2pp, threshold ±5.0pp)
+2025-11-01 19:36:25,009 - src.validation.baseline_validator - INFO - 
+================================================================================
+2025-11-01 19:36:25,009 - src.validation.baseline_validator - INFO - VALIDATION RESULT: PASS
+2025-11-01 19:36:25,009 - src.validation.baseline_validator - INFO - ================================================================================
+2025-11-01 19:36:25,009 - src.validation.baseline_validator - INFO -   Checks: 5 passed, 0 warnings, 0 failed
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Users\richw\AppData\Local\Programs\Python\Python312\Lib\logging\__init__.py", line 1163, in emit
+    stream.write(msg + self.terminator)
+  File "C:\Users\richw\AppData\Local\Programs\Python\Python312\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2705' in position 49: character maps to <undefined>
+Call stack:
+  File "D:\Documents\Toyota Gazoo Motorsport\data-validation-automation-station\examples\run_full_pipeline.py", line 477, in <module>
+    main()
+  File "D:\Documents\Toyota Gazoo Motorsport\data-validation-automation-station\examples\run_full_pipeline.py", line 466, in main
+    run_pipeline(
+  File "D:\Documents\Toyota Gazoo Motorsport\data-validation-automation-station\examples\run_full_pipeline.py", line 319, in run_pipeline
+    logger.info(f"\u2705 Successfully processed chassis {chassis_id}")
+Message: '\u2705 Successfully processed chassis 010'
+Arguments: ()
+2025-11-01 19:36:25,010 - full_pipeline - INFO - 
+############################################################
+2025-11-01 19:36:25,010 - full_pipeline - INFO - # PROCESSING CHASSIS 002
+2025-11-01 19:36:25,010 - full_pipeline - INFO - ############################################################
+
+2025-11-01 19:36:25,010 - full_pipeline - INFO - Loading raw curated data for chassis 002...
+2025-11-01 19:36:25,012 - full_pipeline - INFO -   Found 12 parquet files
+2025-11-01 19:36:25,114 - full_pipeline - INFO -   Loaded 84,745 rows
+2025-11-01 19:36:25,125 - full_pipeline - INFO - 
+[STAGE 1: TIME SYNC] 002
+2025-11-01 19:36:25,125 - full_pipeline - INFO - ============================================================
+2025-11-01 19:36:25,150 - src.transform.drift - INFO - Computing windowed drift for 002 (window=5min)
+2025-11-01 19:36:25,156 - src.transform.drift - INFO -   002: 2 windows
+2025-11-01 19:36:25,157 - src.transform.drift - INFO -   Valid calibrations: 2/2
+2025-11-01 19:36:25,157 - src.transform.drift - INFO -   Clock steps detected: 0
+2025-11-01 19:36:25,157 - src.transform.drift - INFO -   Average drift: 151942.433s ± 2.139s
+2025-11-01 19:36:25,157 - full_pipeline - INFO -   Calibrated 2 time windows
+2025-11-01 19:36:25,165 - full_pipeline - INFO -   Applied drift correction to 84,745 rows
+2025-11-01 19:36:25,169 - full_pipeline - INFO - 
+[STAGE 2: LAP REPAIR] 002
+2025-11-01 19:36:25,169 - full_pipeline - INFO - ============================================================
+2025-11-01 19:36:25,169 - src.transform.lap_repair - INFO - =============================================================
+2025-11-01 19:36:25,169 - src.transform.lap_repair - INFO - Lap Repair Pipeline: 002
+2025-11-01 19:36:25,169 - src.transform.lap_repair - INFO - =============================================================
+2025-11-01 19:36:25,169 - src.transform.lap_repair - INFO - Detecting lap boundaries for 002
+2025-11-01 19:36:25,185 - src.transform.lap_repair - INFO -   Found 4 candidate boundaries
+2025-11-01 19:36:25,186 - src.transform.lap_repair - INFO -     - From lapdist resets: 0
+2025-11-01 19:36:25,186 - src.transform.lap_repair - INFO -     - From lap increments: 4
+2025-11-01 19:36:25,186 - src.transform.lap_repair - INFO -   Validated 4 lap boundaries
+2025-11-01 19:36:25,188 - src.transform.lap_repair - INFO - Assigning lap numbers from boundaries
+2025-11-01 19:36:25,196 - src.transform.lap_repair - INFO -   Assigned lap numbers to 84,745 / 84,745 rows
+2025-11-01 19:36:25,197 - src.transform.lap_repair - INFO - 
+  Lap Repair Summary:
+2025-11-01 19:36:25,197 - src.transform.lap_repair - INFO -     Total boundaries: 4
+2025-11-01 19:36:25,198 - src.transform.lap_repair - INFO -     Unique laps: 5
+2025-11-01 19:36:25,198 - src.transform.lap_repair - INFO -     Rows with laps: 84,745 / 84,745
+2025-11-01 19:36:25,198 - src.transform.lap_repair - INFO - ============================================================
+
+2025-11-01 19:36:25,198 - full_pipeline - INFO -   Detected 4 lap boundaries
+2025-11-01 19:36:25,198 - full_pipeline - INFO -   Repaired 84,745 rows
+2025-11-01 19:36:25,199 - full_pipeline - INFO - 
+[STAGE 3: PIVOT] 002
+2025-11-01 19:36:25,199 - full_pipeline - INFO - ============================================================
+2025-11-01 19:36:25,199 - src.transform.pivot - INFO - ============================================================
+2025-11-01 19:36:25,199 - src.transform.pivot - INFO - PIVOT: 002
+2025-11-01 19:36:25,199 - src.transform.pivot - INFO - ============================================================
+2025-11-01 19:36:25,202 - src.transform.pivot - INFO -   Input: 84,745 rows, 12 unique signals
+2025-11-01 19:36:25,202 - src.transform.pivot - INFO -   Time column: time_corrected
+2025-11-01 19:36:25,202 - src.transform.pivot - INFO -   Preserving columns: ['chassis_id', 'car_no', 'lap_repaired', 'segment_id']
+2025-11-01 19:36:25,204 - src.transform.pivot - INFO -   Identified 12 unique signals
+2025-11-01 19:36:25,204 - src.transform.pivot - INFO - 
+  [Step 1] Pivoting to wide format...
+2025-11-01 19:36:25,249 - src.transform.pivot - INFO -   Output: 8,819 rows, 12 signals as columns
+2025-11-01 19:36:25,249 - src.transform.pivot - INFO - 
+  [Step 2] Processing position data...
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Users\richw\AppData\Local\Programs\Python\Python312\Lib\logging\__init__.py", line 1163, in emit
+    stream.write(msg + self.terminator)
+  File "C:\Users\richw\AppData\Local\Programs\Python\Python312\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2192' in position 82: character maps to <undefined>
+Call stack:
+  File "D:\Documents\Toyota Gazoo Motorsport\data-validation-automation-station\examples\run_full_pipeline.py", line 477, in <module>
+    main()
+  File "D:\Documents\Toyota Gazoo Motorsport\data-validation-automation-station\examples\run_full_pipeline.py", line 466, in main
+    run_pipeline(
+  File "D:\Documents\Toyota Gazoo Motorsport\data-validation-automation-station\examples\run_full_pipeline.py", line 256, in run_pipeline
+    df_wide, pivot_stat = pivot_to_wide_format(
+  File "D:\Documents\Toyota Gazoo Motorsport\data-validation-automation-station\src\transform\pivot.py", line 146, in pivot_to_wide_format
+    logger.info(f"    Renaming: {old_name} \u2192 {new_name}")
+Message: '    Renaming: VBOX_Lat_Min \u2192 gps_lat'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Users\richw\AppData\Local\Programs\Python\Python312\Lib\logging\__init__.py", line 1163, in emit
+    stream.write(msg + self.terminator)
+  File "C:\Users\richw\AppData\Local\Programs\Python\Python312\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2192' in position 87: character maps to <undefined>
+Call stack:
+  File "D:\Documents\Toyota Gazoo Motorsport\data-validation-automation-station\examples\run_full_pipeline.py", line 477, in <module>
+    main()
+  File "D:\Documents\Toyota Gazoo Motorsport\data-validation-automation-station\examples\run_full_pipeline.py", line 466, in main
+    run_pipeline(
+  File "D:\Documents\Toyota Gazoo Motorsport\data-validation-automation-station\examples\run_full_pipeline.py", line 256, in run_pipeline
+    df_wide, pivot_stat = pivot_to_wide_format(
+  File "D:\Documents\Toyota Gazoo Motorsport\data-validation-automation-station\src\transform\pivot.py", line 146, in pivot_to_wide_format
+    logger.info(f"    Renaming: {old_name} \u2192 {new_name}")
+Message: '    Renaming: VBOX_Long_Minutes \u2192 gps_lon'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Users\richw\AppData\Local\Programs\Python\Python312\Lib\logging\__init__.py", line 1163, in emit
+    stream.write(msg + self.terminator)
+  File "C:\Users\richw\AppData\Local\Programs\Python\Python312\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2192' in position 92: character maps to <undefined>
+Call stack:
+  File "D:\Documents\Toyota Gazoo Motorsport\data-validation-automation-station\examples\run_full_pipeline.py", line 477, in <module>
+    main()
+  File "D:\Documents\Toyota Gazoo Motorsport\data-validation-automation-station\examples\run_full_pipeline.py", line 466, in main
+    run_pipeline(
+  File "D:\Documents\Toyota Gazoo Motorsport\data-validation-automation-station\examples\run_full_pipeline.py", line 256, in run_pipeline
+    df_wide, pivot_stat = pivot_to_wide_format(
+  File "D:\Documents\Toyota Gazoo Motorsport\data-validation-automation-station\src\transform\pivot.py", line 146, in pivot_to_wide_format
+    logger.info(f"    Renaming: {old_name} \u2192 {new_name}")
+Message: '    Renaming: Laptrigger_lapdist_dls \u2192 track_distance_m'
+Arguments: ()
+2025-11-01 19:36:25,252 - src.transform.pivot - INFO - 
+  [Step 3] Normalizing signal units...
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Users\richw\AppData\Local\Programs\Python\Python312\Lib\logging\__init__.py", line 1163, in emit
+    stream.write(msg + self.terminator)
+  File "C:\Users\richw\AppData\Local\Programs\Python\Python312\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2192' in position 66: character maps to <undefined>
+Call stack:
+  File "D:\Documents\Toyota Gazoo Motorsport\data-validation-automation-station\examples\run_full_pipeline.py", line 477, in <module>
+    main()
+  File "D:\Documents\Toyota Gazoo Motorsport\data-validation-automation-station\examples\run_full_pipeline.py", line 466, in main
+    run_pipeline(
+  File "D:\Documents\Toyota Gazoo Motorsport\data-validation-automation-station\examples\run_full_pipeline.py", line 256, in run_pipeline
+    df_wide, pivot_stat = pivot_to_wide_format(
+  File "D:\Documents\Toyota Gazoo Motorsport\data-validation-automation-station\src\transform\pivot.py", line 156, in pivot_to_wide_format
+    logger.info("    aps: % \u2192 [0, 1]")
+Message: '    aps: % \u2192 [0, 1]'
+Arguments: ()
+2025-11-01 19:36:25,254 - src.transform.pivot - INFO -     speed: already in m/s (mean: 134.2)
+2025-11-01 19:36:25,254 - src.transform.pivot - INFO - 
+  [Step 4] Computing signal coverage...
+2025-11-01 19:36:25,254 - src.transform.pivot - INFO -     Coverage: 12/12 signals (100.0%)
+2025-11-01 19:36:25,254 - src.transform.pivot - INFO - ============================================================
+
+2025-11-01 19:36:25,255 - src.validation.baseline_validator - INFO - 
+================================================================================
+2025-11-01 19:36:25,255 - src.validation.baseline_validator - INFO - BASELINE VALIDATION: PIVOT - Chassis 002
+2025-11-01 19:36:25,255 - src.validation.baseline_validator - INFO - ================================================================================
+2025-11-01 19:36:25,255 - src.validation.baseline_validator - INFO - 
+[Check 1] Sample Counts (±10%)
+2025-11-01 19:36:25,257 - src.validation.baseline_validator - INFO - 
+[Check 3] Time Coverage (±1%)
+2025-11-01 19:36:25,264 - src.validation.baseline_validator - INFO -   PASS: Time span: 7.0 min (baseline: 7.0 min, +0.01%)
+2025-11-01 19:36:25,264 - src.validation.baseline_validator - INFO - 
+[Check 4] Signal Presence (stage-aware)
+2025-11-01 19:36:25,265 - src.validation.baseline_validator - INFO -   PASS: gps_lat: 100.0% (expected ~100.0% at pivot, +0.0pp, threshold ±10.0pp)
+2025-11-01 19:36:25,265 - src.validation.baseline_validator - INFO -   PASS: gps_lon: 100.0% (expected ~100.0% at pivot, +0.0pp, threshold ±10.0pp)
+2025-11-01 19:36:25,265 - src.validation.baseline_validator - INFO -   PASS: track_distance_m: 20.3% (expected ~20.4% at pivot, -0.0pp, threshold ±10.0pp)
+2025-11-01 19:36:25,265 - src.validation.baseline_validator - INFO -   PASS: speed: 20.3% (expected ~20.4% at pivot, -0.0pp, threshold ±10.0pp)
+2025-11-01 19:36:25,265 - src.validation.baseline_validator - INFO - 
+================================================================================
+2025-11-01 19:36:25,265 - src.validation.baseline_validator - INFO - VALIDATION RESULT: PASS
+2025-11-01 19:36:25,265 - src.validation.baseline_validator - INFO - ================================================================================
+2025-11-01 19:36:25,265 - src.validation.baseline_validator - INFO -   Checks: 18 passed, 0 warnings, 0 failed
+2025-11-01 19:36:25,265 - full_pipeline - INFO - 
+[STAGE 3: POSITION NORMALIZATION] 002
+2025-11-01 19:36:25,265 - full_pipeline - INFO - ============================================================
+2025-11-01 19:36:25,265 - src.transform.position - INFO - ============================================================
+2025-11-01 19:36:25,265 - src.transform.position - INFO - Position Normalization: 002
+2025-11-01 19:36:25,265 - src.transform.position - INFO - ============================================================
+2025-11-01 19:36:25,268 - src.transform.position - INFO -   Circuit: Barber Motorsports Park
+2025-11-01 19:36:25,268 - src.transform.position - INFO -   GPS Bounds: Lat [33.5, 33.6], Lon [-86.65, -86.55]
+2025-11-01 19:36:25,268 - src.transform.position - INFO - 
+  [Step 1] GPS columns already present (renamed by pivot stage)...
+2025-11-01 19:36:25,268 - src.transform.position - INFO -     GPS coverage: 100.0%
+2025-11-01 19:36:25,268 - src.transform.position - INFO -     Lat range: 33.529362 to 33.535892
+2025-11-01 19:36:25,268 - src.transform.position - INFO -     Lon range: -86.624298 to -86.614548
+2025-11-01 19:36:25,268 - src.transform.position - INFO - 
+  [Step 2] Validating GPS bounds...
+2025-11-01 19:36:25,269 - src.transform.position - INFO -     All GPS points within bounds
+2025-11-01 19:36:25,269 - src.transform.position - INFO - 
+  [Step 3] Detecting GPS outliers...
+2025-11-01 19:36:25,270 - src.transform.position - INFO -     No outliers detected (jump threshold: 500.0m)
+2025-11-01 19:36:25,271 - src.transform.position - INFO - 
+  [Step 4] Interpolating sparse GPS data...
+2025-11-01 19:36:25,275 - src.transform.position - INFO -     Interpolated 1 points (0.0%)
+2025-11-01 19:36:25,275 - src.transform.position - INFO -     GPS coverage after interpolation: 100.0%
+2025-11-01 19:36:25,276 - src.transform.position - INFO - 
+  [Step 5] Track distance already present (renamed by pivot stage)...
+2025-11-01 19:36:25,276 - src.transform.position - INFO -     Track distance coverage: 20.3%
+2025-11-01 19:36:25,276 - src.transform.position - INFO -     Range: 7.0m to 3682.0m
+2025-11-01 19:36:25,276 - src.transform.position - INFO - 
+  [Step 6] Computing position quality score...
+2025-11-01 19:36:25,276 - src.transform.position - INFO -     Quality score: 0.46 / 1.00
+2025-11-01 19:36:25,276 - src.transform.position - INFO - ============================================================
+
+2025-11-01 19:36:25,276 - full_pipeline - INFO -   Quality score: 0.46
+2025-11-01 19:36:25,276 - full_pipeline - INFO -   GPS coverage: 100.0%
+2025-11-01 19:36:25,276 - full_pipeline - INFO - 
+[STAGE 5: RESAMPLE] 002
+2025-11-01 19:36:25,276 - full_pipeline - INFO - ============================================================
+2025-11-01 19:36:25,277 - src.transform.resample - INFO - ============================================================
+2025-11-01 19:36:25,277 - src.transform.resample - INFO - RESAMPLE (Interpolation + Derived Speed): 002
+2025-11-01 19:36:25,277 - src.transform.resample - INFO - ============================================================
+2025-11-01 19:36:25,277 - src.transform.resample - INFO -   Input: 8,819 rows
+2025-11-01 19:36:25,277 - src.transform.resample - INFO -   Interpolation method: linear
+2025-11-01 19:36:25,277 - src.transform.resample - INFO -   Target frequency: 20.0 Hz
+2025-11-01 19:36:25,279 - src.transform.resample - INFO -   Time range: 2025-09-06 19:17:57.284000+00:00 to 2025-09-06 19:24:58.958000+00:00
+2025-11-01 19:36:25,279 - src.transform.resample - INFO -   Time span: 421.7 seconds
+2025-11-01 19:36:25,279 - src.transform.resample - INFO - 
+  [Step 1] Creating uniform time grid...
+2025-11-01 19:36:25,279 - src.transform.resample - INFO -     Expected samples at 20.0 Hz: 8,434
+2025-11-01 19:36:25,279 - src.transform.resample - INFO - 
+  [Step 2] Reindexing to time grid...
+2025-11-01 19:36:25,281 - src.transform.resample - INFO - 
+  [Step 3] Interpolating continuous signals...
+2025-11-01 19:36:25,298 - src.transform.resample - INFO -     Interpolated 96,904 values across all columns
+2025-11-01 19:36:25,300 - src.transform.resample - INFO - 
+  [Step 4] Computing derived speed...
+2025-11-01 19:36:25,300 - src.transform.resample - INFO -     Raw speed coverage: 35.0%
+2025-11-01 19:36:25,303 - src.transform.resample - INFO -     Derived speed coverage: 99.5%
+2025-11-01 19:36:25,304 - src.transform.resample - INFO -     Final speed coverage (coalesced): 99.5%
+2025-11-01 19:36:25,304 - src.transform.resample - INFO - 
+  [Step 5] Computing simulation-ready coverage...
+2025-11-01 19:36:25,304 - src.transform.resample - INFO -     Rows after resample: 8,434
+2025-11-01 19:36:25,304 - src.transform.resample - INFO -     Actual frequency: 20.00 Hz
+2025-11-01 19:36:25,304 - src.transform.resample - INFO -     Coverage (position): 100.0%
+2025-11-01 19:36:25,304 - src.transform.resample - INFO -     Coverage (velocity): 99.5%
+2025-11-01 19:36:25,304 - src.transform.resample - INFO -     Coverage (sim-ready = pos + vel): 99.5%
+2025-11-01 19:36:25,304 - src.transform.resample - INFO - ============================================================
+
+2025-11-01 19:36:25,304 - src.validation.baseline_validator - INFO - 
+================================================================================
+2025-11-01 19:36:25,304 - src.validation.baseline_validator - INFO - BASELINE VALIDATION: RESAMPLE - Chassis 002
+2025-11-01 19:36:25,304 - src.validation.baseline_validator - INFO - ================================================================================
+2025-11-01 19:36:25,305 - src.validation.baseline_validator - INFO - 
+[Check 1] Sample Counts (±10%)
+2025-11-01 19:36:25,305 - src.validation.baseline_validator - INFO - 
+[Check 3] Time Coverage (±1%)
+2025-11-01 19:36:25,310 - src.validation.baseline_validator - INFO -   PASS: Time span: 7.0 min (baseline: 7.0 min, +0.00%)
+2025-11-01 19:36:25,310 - src.validation.baseline_validator - INFO - 
+[Check 4] Signal Presence (stage-aware)
+2025-11-01 19:36:25,310 - src.validation.baseline_validator - INFO -   PASS: gps_lat: 100.0% (expected ~100.0% at resample, -0.0pp, threshold ±5.0pp)
+2025-11-01 19:36:25,310 - src.validation.baseline_validator - INFO -   PASS: gps_lon: 100.0% (expected ~100.0% at resample, -0.0pp, threshold ±5.0pp)
+2025-11-01 19:36:25,310 - src.validation.baseline_validator - INFO -   PASS: track_distance_m: 99.5% (expected ~100.0% at resample, -0.5pp, threshold ±5.0pp)
+2025-11-01 19:36:25,310 - src.validation.baseline_validator - INFO -   PASS: speed_final: 99.5% (expected ~100.0% at resample, -0.5pp, threshold ±5.0pp)
+2025-11-01 19:36:25,310 - src.validation.baseline_validator - INFO - 
+================================================================================
+2025-11-01 19:36:25,310 - src.validation.baseline_validator - INFO - VALIDATION RESULT: PASS
+2025-11-01 19:36:25,310 - src.validation.baseline_validator - INFO - ================================================================================
+2025-11-01 19:36:25,310 - src.validation.baseline_validator - INFO -   Checks: 5 passed, 0 warnings, 0 failed
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Users\richw\AppData\Local\Programs\Python\Python312\Lib\logging\__init__.py", line 1163, in emit
+    stream.write(msg + self.terminator)
+  File "C:\Users\richw\AppData\Local\Programs\Python\Python312\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2705' in position 49: character maps to <undefined>
+Call stack:
+  File "D:\Documents\Toyota Gazoo Motorsport\data-validation-automation-station\examples\run_full_pipeline.py", line 477, in <module>
+    main()
+  File "D:\Documents\Toyota Gazoo Motorsport\data-validation-automation-station\examples\run_full_pipeline.py", line 466, in main
+    run_pipeline(
+  File "D:\Documents\Toyota Gazoo Motorsport\data-validation-automation-station\examples\run_full_pipeline.py", line 319, in run_pipeline
+    logger.info(f"\u2705 Successfully processed chassis {chassis_id}")
+Message: '\u2705 Successfully processed chassis 002'
+Arguments: ()
+2025-11-01 19:36:25,312 - full_pipeline - INFO - 
+############################################################
+2025-11-01 19:36:25,312 - full_pipeline - INFO - # STAGE 6: MULTI-CAR SYNCHRONIZATION
+2025-11-01 19:36:25,312 - full_pipeline - INFO - ############################################################
+
+2025-11-01 19:36:25,312 - src.transform.sync - INFO - ============================================================
+2025-11-01 19:36:25,312 - src.transform.sync - INFO - MULTI-CAR SYNCHRONIZATION: barber_r1_pipeline
+2025-11-01 19:36:25,312 - src.transform.sync - INFO - ============================================================
+2025-11-01 19:36:25,312 - src.transform.sync - INFO -   Cars: 2
+2025-11-01 19:36:25,312 - src.transform.sync - INFO -   Target frequency: 20.0 Hz
+2025-11-01 19:36:25,312 - src.transform.sync - INFO - 
+  [Step 1] Determining global time range...
+2025-11-01 19:36:25,312 - src.transform.sync - INFO - Determining global time range...
+2025-11-01 19:36:25,313 - src.transform.sync - INFO -   010: 2025-09-06 18:40:00.936000+00:00 to 2025-09-06 19:24:58.836000+00:00
+2025-11-01 19:36:25,313 - src.transform.sync - INFO -   002: 2025-09-06 19:17:57.284000+00:00 to 2025-09-06 19:24:58.934000+00:00
+2025-11-01 19:36:25,313 - src.transform.sync - INFO - 
+  Global time range:
+2025-11-01 19:36:25,313 - src.transform.sync - INFO -     Start: 2025-09-06 18:40:00.936000+00:00
+2025-11-01 19:36:25,313 - src.transform.sync - INFO -     End: 2025-09-06 19:24:58.934000+00:00
+2025-11-01 19:36:25,313 - src.transform.sync - INFO -     Span: 2698.0 seconds
+2025-11-01 19:36:25,313 - src.transform.sync - INFO - 
+  [Step 2] Creating global time grid...
+2025-11-01 19:36:25,313 - src.transform.sync - INFO - Creating global time grid at 20.0 Hz...
+2025-11-01 19:36:25,314 - src.transform.sync - INFO -   Created 53,960 time points
+2025-11-01 19:36:25,314 - src.transform.sync - INFO - 
+  [Step 3] Aligning cars to global grid...
+2025-11-01 19:36:25,314 - src.transform.sync - INFO - 
+  Processing 010...
+2025-11-01 19:36:25,314 - src.transform.sync - INFO -   Aligning 010 to global grid...
+2025-11-01 19:36:25,330 - src.transform.sync - INFO -     Coverage: 53,328/53,960 frames (98.8%)
+2025-11-01 19:36:25,332 - src.transform.sync - INFO - 
+  Processing 002...
+2025-11-01 19:36:25,332 - src.transform.sync - INFO -   Aligning 002 to global grid...
+2025-11-01 19:36:25,341 - src.transform.sync - INFO -     Coverage: 0/53,960 frames (0.0%)
+2025-11-01 19:36:25,341 - src.transform.sync - INFO - 
+  [Step 4] Concatenating all cars...
+2025-11-01 19:36:25,377 - src.transform.sync - INFO -     Total rows: 107,920
+2025-11-01 19:36:25,377 - src.transform.sync - INFO -     Total columns: 22
+2025-11-01 19:36:25,377 - src.transform.sync - INFO - 
+  [Step 5] Computing statistics...
+2025-11-01 19:36:25,391 - src.transform.sync - INFO -     Cars per frame: 2.0 (min: 1, max: 2)
+2025-11-01 19:36:25,391 - src.transform.sync - INFO -     Coverage: 53,960/53,960 frames (100.0%)
+2025-11-01 19:36:25,391 - src.transform.sync - INFO - ============================================================
+
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Users\richw\AppData\Local\Programs\Python\Python312\Lib\logging\__init__.py", line 1163, in emit
+    stream.write(msg + self.terminator)
+  File "C:\Users\richw\AppData\Local\Programs\Python\Python312\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2705' in position 49: character maps to <undefined>
+Call stack:
+  File "D:\Documents\Toyota Gazoo Motorsport\data-validation-automation-station\examples\run_full_pipeline.py", line 477, in <module>
+    main()
+  File "D:\Documents\Toyota Gazoo Motorsport\data-validation-automation-station\examples\run_full_pipeline.py", line 466, in main
+    run_pipeline(
+  File "D:\Documents\Toyota Gazoo Motorsport\data-validation-automation-station\examples\run_full_pipeline.py", line 344, in run_pipeline
+    logger.info(f"\u2705 Synchronized {len(dfs_resampled)} cars")
+Message: '\u2705 Synchronized 2 cars'
+Arguments: ()
+2025-11-01 19:36:25,393 - full_pipeline - INFO -    Total frames: 107,920
+2025-11-01 19:36:25,393 - full_pipeline - INFO -    Time span: 2698.0 seconds
+2025-11-01 19:36:25,394 - src.transform.sync - INFO - Saving synchronized data to data\processed\barber_r1_pipeline\synchronized\multi_car_frames.parquet
+2025-11-01 19:36:25,479 - src.transform.sync - INFO -   Saved 107,920 rows, 22 columns
+2025-11-01 19:36:25,479 - src.transform.sync - INFO -   File size: 6.09 MB
+2025-11-01 19:36:25,480 - src.transform.pivot - INFO - Saving pivot statistics to data\processed
+2025-11-01 19:36:25,483 - src.transform.pivot - INFO -   Saved statistics for 2 vehicles
+2025-11-01 19:36:25,483 - src.transform.pivot - INFO -   Output: data\processed\barber_r1_pipeline\pivot_stats.parquet
+2025-11-01 19:36:25,483 - src.transform.pivot - INFO - 
+  Pivot Summary:
+2025-11-01 19:36:25,483 - src.transform.pivot - INFO -     Mean coverage: 100.0%
+2025-11-01 19:36:25,483 - src.transform.pivot - INFO -     Mean signals: 12.0
+2025-11-01 19:36:25,483 - src.transform.pivot - INFO -     Total rows after pivot: 69,765
+2025-11-01 19:36:25,483 - src.transform.resample - INFO - Saving resample statistics to data\processed
+2025-11-01 19:36:25,486 - src.transform.resample - INFO -   Saved statistics for 2 vehicles
+2025-11-01 19:36:25,486 - src.transform.resample - INFO -   Output: data\processed\barber_r1_pipeline\resample_stats.parquet
+2025-11-01 19:36:25,486 - src.transform.resample - INFO - 
+  Resample Summary:
+2025-11-01 19:36:25,486 - src.transform.resample - INFO -     Mean actual Hz: 20.00
+2025-11-01 19:36:25,486 - src.transform.resample - INFO -     Mean coverage: 99.2%
+2025-11-01 19:36:25,486 - src.transform.resample - INFO -     Total gaps detected: 0
+2025-11-01 19:36:25,486 - src.transform.resample - INFO -     Total ffill operations: 0
+2025-11-01 19:36:25,486 - src.transform.sync - INFO - Saving sync statistics to data\processed
+2025-11-01 19:36:25,489 - src.transform.sync - INFO -   Saved overall stats to: data\processed\barber_r1_pipeline\sync_stats.parquet
+2025-11-01 19:36:25,491 - src.transform.sync - INFO -   Saved per-car coverage to: data\processed\barber_r1_pipeline\car_coverage.parquet
+2025-11-01 19:36:25,491 - src.transform.sync - INFO - 
+  Sync Summary:
+2025-11-01 19:36:25,491 - src.transform.sync - INFO -     Total cars: 2
+2025-11-01 19:36:25,491 - src.transform.sync - INFO -     Total frames: 53,960
+2025-11-01 19:36:25,491 - src.transform.sync - INFO -     Mean cars/frame: 2.0
+2025-11-01 19:36:25,491 - src.transform.sync - INFO -     Overall coverage: 100.0%
+2025-11-01 19:36:25,491 - src.transform.sync - INFO -     Mean per-car coverage: 49.4%
+Traceback (most recent call last):
+  File "D:\Documents\Toyota Gazoo Motorsport\data-validation-automation-station\examples\run_full_pipeline.py", line 477, in <module>
+    main()
+  File "D:\Documents\Toyota Gazoo Motorsport\data-validation-automation-station\examples\run_full_pipeline.py", line 466, in main
+    run_pipeline(
+  File "D:\Documents\Toyota Gazoo Motorsport\data-validation-automation-station\examples\run_full_pipeline.py", line 370, in run_pipeline
+    "generated_at": datetime.now().isoformat(),
+                    ^^^^^^^^
+NameError: name 'datetime' is not defined. Did you forget to import 'datetime'?
