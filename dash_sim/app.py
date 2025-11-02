@@ -325,20 +325,25 @@ def control_playback(play_clicks, pause_clicks, speed, state):
 
     if trigger_id == 'btn-play':
         logger.info("▶ PLAY")
-        state['playing'] = True
-        logger.info(f"  Returning: state={state}, ticker.disabled=False")
-        return state, False  # Enable ticker
+        new_state = dict(state or {})
+        new_state['playing'] = True
+        new_state['start_frame'] = int(new_state.get('frame', 0))
+        new_state['start_n'] = None  # Will be set on first tick
+        logger.info(f"  Returning: state={new_state}, ticker.disabled=False")
+        return new_state, False  # Enable ticker
     elif trigger_id == 'btn-pause':
         logger.info("⏸ PAUSE")
-        state['playing'] = False
-        logger.info(f"  Returning: state={state}, ticker.disabled=True")
-        return state, True  # Disable ticker
+        new_state = dict(state or {})
+        new_state['playing'] = False
+        logger.info(f"  Returning: state={new_state}, ticker.disabled=True")
+        return new_state, True  # Disable ticker
     elif trigger_id == 'speed-dropdown':
         logger.info(f"Speed: {speed}x")
-        state['speed'] = speed
-        ticker_disabled = not state['playing']
-        logger.info(f"  Returning: state={state}, ticker.disabled={ticker_disabled}")
-        return state, ticker_disabled
+        new_state = dict(state or {})
+        new_state['speed'] = speed
+        ticker_disabled = not new_state['playing']
+        logger.info(f"  Returning: state={new_state}, ticker.disabled={ticker_disabled}")
+        return new_state, ticker_disabled
 
     return state, not state['playing']
 
@@ -373,16 +378,18 @@ def update_graph_from_store(state, traj_data, current_fig):
 
 
 @app.callback(
-    Output('frame-info', 'children'),
-    Input('store-state', 'data'),
-    Input('store-trajectories', 'data'),
+    Output('frame-info', 'children', allow_duplicate=True),
+    Input('ticker', 'n_intervals'),
+    State('store-state', 'data'),
+    State('store-trajectories', 'data'),
+    prevent_initial_call=True
 )
-def update_frame_info(state, traj_data):
-    """Update frame counter display."""
-    frame = state['frame']
-    total = traj_data['frame_count']
-    time_sec = frame / config.TARGET_FPS
-    return f"Frame: {frame:,} / {total:,} | Time: {int(time_sec // 60)}:{int(time_sec % 60):02d}"
+def heartbeat(n, state, traj):
+    """Heartbeat to show ticker is firing and frame is advancing."""
+    f = int(state.get('frame', 0))
+    total = int(traj.get('frame_count', 0))
+    time_sec = f / config.TARGET_FPS
+    return f"Ticker={n} | frame={f:,} / {total:,} | Time: {int(time_sec // 60)}:{int(time_sec % 60):02d}"
 
 
 # Server-side animation callback
@@ -393,23 +400,25 @@ def update_frame_info(state, traj_data):
     State('store-trajectories', 'data'),
     prevent_initial_call=True
 )
-def animate_frame(n_intervals, state, traj_data):
-    """Advance frame when playing - updates store only."""
-    logger.info(f"animate_frame CALLED: n_intervals={n_intervals}, playing={state.get('playing')}, current_frame={state.get('frame')}")
-
+def animate_frame(n_intervals, state, traj):
+    """Advance frame when playing - stateless computation from ticker anchors."""
     if not state.get('playing', False):
-        logger.info("  Not playing - raising PreventUpdate")
         raise dash.exceptions.PreventUpdate
 
-    speed = int(state.get('speed', 1)) or 1
-    total = traj_data['frame_count']
-    current = state.get('frame', 0)
-    new_frame = (current + speed) % max(total, 1)
-    state = dict(state, frame=new_frame)
+    total = int(traj['frame_count']) or 1
+    speed = int(round(state.get('speed', 1))) or 1
 
-    logger.info(f"  Advancing: {current} → {new_frame} (speed={speed})")
+    # Anchor setup: lock to ticker value when Play pressed
+    start_n = state.get('start_n')
+    start_frame = int(state.get('start_frame', state.get('frame', 0)))
+    if start_n is None:
+        start_n = int(n_intervals)
 
-    return state
+    elapsed = int(n_intervals) - int(start_n)
+    frame = (start_frame + elapsed * speed) % total
+
+    # Return FRESH dict (no mutation)
+    return {**state, 'frame': int(frame), 'start_n': int(start_n), 'start_frame': int(start_frame)}
 
 
 # SLIDER CALLBACKS DISABLED - They create circular dependency that pauses playback
