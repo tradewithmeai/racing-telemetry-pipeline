@@ -326,15 +326,19 @@ def control_playback(play_clicks, pause_clicks, speed, state):
     if trigger_id == 'btn-play':
         logger.info("▶ PLAY")
         state['playing'] = True
+        logger.info(f"  Returning: state={state}, ticker.disabled=False")
         return state, False  # Enable ticker
     elif trigger_id == 'btn-pause':
         logger.info("⏸ PAUSE")
         state['playing'] = False
+        logger.info(f"  Returning: state={state}, ticker.disabled=True")
         return state, True  # Disable ticker
     elif trigger_id == 'speed-dropdown':
         logger.info(f"Speed: {speed}x")
         state['speed'] = speed
-        return state, not state['playing']
+        ticker_disabled = not state['playing']
+        logger.info(f"  Returning: state={state}, ticker.disabled={ticker_disabled}")
+        return state, ticker_disabled
 
     return state, not state['playing']
 
@@ -391,40 +395,47 @@ def update_frame_info(state, traj_data):
 )
 def animate_frame(n_intervals, state, traj_data):
     """Advance frame when playing - updates store only."""
+    logger.info(f"animate_frame CALLED: n_intervals={n_intervals}, playing={state.get('playing')}, current_frame={state.get('frame')}")
+
     if not state.get('playing', False):
+        logger.info("  Not playing - raising PreventUpdate")
         raise dash.exceptions.PreventUpdate
+
     speed = int(state.get('speed', 1)) or 1
     total = traj_data['frame_count']
-    new_frame = (state.get('frame', 0) + speed) % max(total, 1)
+    current = state.get('frame', 0)
+    new_frame = (current + speed) % max(total, 1)
     state = dict(state, frame=new_frame)
 
-    # Log every 20 frames to verify advancement
-    if new_frame % 20 == 0:
-        logger.info(f"advancing frame → {new_frame}")
+    logger.info(f"  Advancing: {current} → {new_frame} (speed={speed})")
 
     return state
 
 
-@app.callback(
-    Output('frame-slider', 'value', allow_duplicate=True),
-    Input('store-state', 'data'),
-    prevent_initial_call=True
-)
-def sync_slider_from_store(state):
-    """Mirror store frame to slider (read-only display)."""
-    return state.get('frame', 0)
+# SLIDER CALLBACKS DISABLED - They create circular dependency that pauses playback
+# sync_slider_from_store updates slider → user_seek_slider detects change → sets playing=False
+# We'll fix this after getting core animation working
+
+# @app.callback(
+#     Output('frame-slider', 'value', allow_duplicate=True),
+#     Input('store-state', 'data'),
+#     prevent_initial_call=True
+# )
+# def sync_slider_from_store(state):
+#     """Mirror store frame to slider (read-only display)."""
+#     return state.get('frame', 0)
 
 
-@app.callback(
-    Output('store-state', 'data', allow_duplicate=True),
-    Input('frame-slider', 'value'),
-    State('store-state', 'data'),
-    prevent_initial_call=True
-)
-def user_seek_slider(slider_value, state):
-    """Handle user manual scrubbing - pause playback and seek to frame."""
-    state = dict(state, playing=False, frame=int(slider_value or 0))
-    return state
+# @app.callback(
+#     Output('store-state', 'data', allow_duplicate=True),
+#     Input('frame-slider', 'value'),
+#     State('store-state', 'data'),
+#     prevent_initial_call=True
+# )
+# def user_seek_slider(slider_value, state):
+#     """Handle user manual scrubbing - pause playback and seek to frame."""
+#     state = dict(state, playing=False, frame=int(slider_value or 0))
+#     return state
 
 
 @app.callback(
