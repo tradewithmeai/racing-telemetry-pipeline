@@ -306,7 +306,7 @@ def _wrap_frame(n, frame_count):
 # Server-side callbacks
 
 @app.callback(
-    Output('store-state', 'data'),
+    Output('store-state', 'data', allow_duplicate=True),
     Output('ticker', 'disabled'),
     Input('btn-play', 'n_clicks'),
     Input('btn-pause', 'n_clicks'),
@@ -397,6 +397,11 @@ def animate_frame(n_intervals, state, traj_data):
     total = traj_data['frame_count']
     new_frame = (state.get('frame', 0) + speed) % max(total, 1)
     state = dict(state, frame=new_frame)
+
+    # Log every 20 frames to verify advancement
+    if new_frame % 20 == 0:
+        logger.info(f"advancing frame → {new_frame}")
+
     return state
 
 
