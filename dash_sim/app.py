@@ -378,17 +378,19 @@ def update_graph_from_store(state, traj_data, current_fig):
 
 
 @app.callback(
-    Output('frame-info', 'children', allow_duplicate=True),
+    Output('frame-info', 'children'),
     Input('ticker', 'n_intervals'),
     State('store-state', 'data'),
     State('store-trajectories', 'data'),
-    prevent_initial_call=True
 )
 def heartbeat(n, state, traj):
     """Heartbeat to show ticker is firing and frame is advancing."""
+    if n is None:
+        return "Waiting for ticker..."
     f = int(state.get('frame', 0))
     total = int(traj.get('frame_count', 0))
     time_sec = f / config.TARGET_FPS
+    logger.info(f"HEARTBEAT FIRED: n={n}, frame={f}")
     return f"Ticker={n} | frame={f:,} / {total:,} | Time: {int(time_sec // 60)}:{int(time_sec % 60):02d}"
 
 
@@ -402,7 +404,10 @@ def heartbeat(n, state, traj):
 )
 def animate_frame(n_intervals, state, traj):
     """Advance frame when playing - stateless computation from ticker anchors."""
+    logger.info(f"animate_frame CALLED: n={n_intervals}, playing={state.get('playing')}")
+
     if not state.get('playing', False):
+        logger.info("  Not playing - PreventUpdate")
         raise dash.exceptions.PreventUpdate
 
     total = int(traj['frame_count']) or 1
@@ -416,6 +421,8 @@ def animate_frame(n_intervals, state, traj):
 
     elapsed = int(n_intervals) - int(start_n)
     frame = (start_frame + elapsed * speed) % total
+
+    logger.info(f"  Returning frame={frame}")
 
     # Return FRESH dict (no mutation)
     return {**state, 'frame': int(frame), 'start_n': int(start_n), 'start_frame': int(start_frame)}
