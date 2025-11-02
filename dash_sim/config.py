@@ -10,9 +10,9 @@ PARQUET_PATH = BASE_DIR / "data/processed/barber_r1_pipeline/synchronized/multi_
 CURRENT_TRACK = "barber"  # Current track name
 TRACKS_DIR = Path(__file__).parent / "tracks"  # Directory containing track definitions
 
-# Track files (simple ribbon system)
-CENTERLINE_FILE = TRACKS_DIR / CURRENT_TRACK / "track_centerline.npy"
-RIBBONS_FILE = TRACKS_DIR / CURRENT_TRACK / "track_ribbons.json"
+# Track files (simple ribbon system) - using assets versions that work correctly
+CENTERLINE_FILE = Path(__file__).parent / "assets/track_centerline.npy"
+RIBBONS_FILE = Path(__file__).parent / "assets/track_ribbons.json"
 
 # Cars to display (chassis IDs)
 DEFAULT_CARS = ["010", "002"]  # Start with 2, easy to expand to all 20
