@@ -71,8 +71,8 @@ try:
     ribbons_data = load_ribbons(config.RIBBONS_FILE)
     logger.info(f"Loaded {len(ribbons_data['ribbons'])} ribbons")
 
-    # Check for cached trajectories
-    cache_file = Path(__file__).parent / "cache" / f"trajectories_{'_'.join(DEFAULT_CARS)}.pkl"
+    # Check for cached trajectories (track-aware)
+    cache_file = Path(__file__).parent / "cache" / f"{CURRENT_TRACK}_trajectories_{'_'.join(DEFAULT_CARS)}.pkl"
     cache_file.parent.mkdir(exist_ok=True)
 
     if cache_file.exists():
@@ -138,17 +138,26 @@ def create_initial_figure():
             ))
 
     # Add car marker traces (one scatter trace per car)
+    import math
+    def is_valid_xy(x, y):
+        return (x is not None and y is not None and
+                not (isinstance(x, float) and math.isnan(x)) and
+                not (isinstance(y, float) and math.isnan(y)))
+
     for car_id in store_data['car_ids']:
         traj = store_data['trajectories'][car_id]
 
-        # Find first valid position
+        # Find first valid position (not None and not NaN)
         x_arr = traj['x']
         y_arr = traj['y']
         first_valid_idx = next((i for i, (x, y) in enumerate(zip(x_arr, y_arr))
-                               if not (x is None or y is None)), 0)
+                               if is_valid_xy(x, y)), 0)
 
-        initial_x = [x_arr[first_valid_idx]] if first_valid_idx < len(x_arr) else [0]
-        initial_y = [y_arr[first_valid_idx]] if first_valid_idx < len(y_arr) else [0]
+        vx = x_arr[first_valid_idx] if first_valid_idx < len(x_arr) and not (isinstance(x_arr[first_valid_idx], float) and math.isnan(x_arr[first_valid_idx])) else None
+        vy = y_arr[first_valid_idx] if first_valid_idx < len(y_arr) and not (isinstance(y_arr[first_valid_idx], float) and math.isnan(y_arr[first_valid_idx])) else None
+
+        initial_x = [vx] if vx is not None else []
+        initial_y = [vy] if vy is not None else []
 
         fig.add_trace(go.Scattergl(
             x=initial_x,
@@ -339,58 +348,23 @@ def control_playback(play_clicks, pause_clicks, speed, state):
 )
 def update_graph_from_store(state, traj_data, current_fig):
     """Update car positions from store (driven by both animation and manual seek)."""
-    if not (isinstance(state, dict) and isinstance(traj_data, dict) and isinstance(current_fig, dict)):
-        return current_fig
-
-    frame = int(state.get('frame', 0))
-    car_ids = traj_data.get('car_ids', [])
-    trajectories = traj_data.get('trajectories', {})
+    frame_idx = state.get('frame', 0)
+    if current_fig is None:
+        return dash.no_update
     ribbon_count = len(ribbons_data['ribbons'])
-
-    for idx, car_id in enumerate(car_ids):
-        traj = trajectories.get(car_id, {})
-        xs = traj.get('x')
-        ys = traj.get('y')
-        if not xs or not ys:
-            continue
-
-        # Clamp frame inside trajectory length
-        f = frame
-        if f >= len(xs):
-            f = len(xs) - 1
-        if f < 0:
-            f = 0
-
-        x = xs[f]
-        y = ys[f]
-        if x is None or y is None:
-            continue
-
-        try:
-            # Avoid NaNs
-            import math
-            if math.isnan(x) or math.isnan(y):
-                continue
-        except TypeError:
-            # Cast and re-check
-            try:
-                xf = float(x)
-                yf = float(y)
-                import math
-                if math.isnan(xf) or math.isnan(yf):
-                    continue
-                x, y = xf, yf
-            except Exception:
-                continue
-
-        trace_idx = ribbon_count + idx  # Cars after ribbons
-        try:
+    updated = 0
+    import math
+    for idx, car_id in enumerate(traj_data['car_ids']):
+        traj = traj_data['trajectories'][car_id]
+        x = traj['x'][frame_idx]
+        y = traj['y'][frame_idx]
+        if x is not None and y is not None and not (isinstance(x, float) and math.isnan(x)) and not (isinstance(y, float) and math.isnan(y)):
+            trace_idx = ribbon_count + idx
             current_fig['data'][trace_idx]['x'] = [x]
             current_fig['data'][trace_idx]['y'] = [y]
-        except Exception:
-            # Keep running even if an index is off
-            continue
-
+            updated += 1
+    if frame_idx % 20 == 0:
+        logger.info(f"positions updated: {updated} cars @ frame {frame_idx}")
     return current_fig
 
 
@@ -415,20 +389,15 @@ def update_frame_info(state, traj_data):
     State('store-trajectories', 'data'),
     prevent_initial_call=True
 )
-def animate_frame(_n, state, traj):
+def animate_frame(n_intervals, state, traj_data):
     """Advance frame when playing - updates store only."""
-    if not isinstance(state, dict) or not isinstance(traj, dict):
-        return state
     if not state.get('playing', False):
         raise dash.exceptions.PreventUpdate
-
-    frame_count = int(traj.get('frame_count', 0)) or 0
-    if frame_count <= 0:
-        return state
-
     speed = int(state.get('speed', 1)) or 1
-    new_frame = _wrap_frame(int(state.get('frame', 0)) + speed, frame_count)
-    return {**state, 'frame': new_frame}
+    total = traj_data['frame_count']
+    new_frame = (state.get('frame', 0) + speed) % max(total, 1)
+    state = dict(state, frame=new_frame)
+    return state
 
 
 @app.callback(
@@ -438,9 +407,7 @@ def animate_frame(_n, state, traj):
 )
 def sync_slider_from_store(state):
     """Mirror store frame to slider (read-only display)."""
-    if not isinstance(state, dict):
-        return no_update
-    return int(state.get('frame', 0))
+    return state.get('frame', 0)
 
 
 @app.callback(
@@ -451,13 +418,8 @@ def sync_slider_from_store(state):
 )
 def user_seek_slider(slider_value, state):
     """Handle user manual scrubbing - pause playback and seek to frame."""
-    if not isinstance(state, dict):
-        state = {'frame': 0, 'playing': False, 'speed': 1}
-    try:
-        f = int(slider_value)
-    except (TypeError, ValueError):
-        f = state.get('frame', 0)
-    return {**state, 'playing': False, 'frame': f}
+    state = dict(state, playing=False, frame=int(slider_value or 0))
+    return state
 
 
 @app.callback(
