@@ -1,7 +1,7 @@
 """Race Replay Dashboard - Main Dash Application."""
 
 import dash
-from dash import dcc, html, Input, Output, State, ClientsideFunction
+from dash import dcc, html, Input, Output, State, no_update
 import plotly.graph_objects as go
 from pathlib import Path
 import logging
@@ -284,6 +284,16 @@ app.layout = html.Div([
 ], style={'backgroundColor': '#1a1a1a', 'minHeight': '100vh'})
 
 
+# Helper functions for callbacks
+CAR_TRACES_START_INDEX = 11  # Car traces come after 11 ribbon traces
+
+def _wrap_frame(n, frame_count):
+    """Wrap frame index with bounds checking."""
+    if not frame_count:
+        return 0
+    return n % frame_count
+
+
 # Server-side callbacks
 
 @app.callback(
@@ -322,37 +332,64 @@ def control_playback(play_clicks, pause_clicks, speed, state):
 
 @app.callback(
     Output('track-graph', 'figure'),
-    Input('frame-slider', 'value'),
+    Input('store-state', 'data'),
     State('store-trajectories', 'data'),
     State('track-graph', 'figure'),
     prevent_initial_call=True
 )
-def update_graph_on_slider(frame_idx, traj_data, current_fig):
-    """Update car positions when slider is moved (for manual scrubbing)."""
-    if current_fig is None:
-        return dash.no_update
+def update_graph_from_store(state, traj_data, current_fig):
+    """Update car positions from store (driven by both animation and manual seek)."""
+    if not (isinstance(state, dict) and isinstance(traj_data, dict) and isinstance(current_fig, dict)):
+        return current_fig
 
-    # Car traces start after ribbons (11 ribbon traces)
+    frame = int(state.get('frame', 0))
+    car_ids = traj_data.get('car_ids', [])
+    trajectories = traj_data.get('trajectories', {})
     ribbon_count = len(ribbons_data['ribbons'])
 
-    # Update each car trace with new positions
-    updated = 0
-    for idx, car_id in enumerate(traj_data['car_ids']):
-        traj = traj_data['trajectories'][car_id]
-        x = traj['x'][frame_idx]
-        y = traj['y'][frame_idx]
+    for idx, car_id in enumerate(car_ids):
+        traj = trajectories.get(car_id, {})
+        xs = traj.get('x')
+        ys = traj.get('y')
+        if not xs or not ys:
+            continue
 
-        # Only update if position is valid (not None and not NaN)
-        if x is not None and y is not None:
+        # Clamp frame inside trajectory length
+        f = frame
+        if f >= len(xs):
+            f = len(xs) - 1
+        if f < 0:
+            f = 0
+
+        x = xs[f]
+        y = ys[f]
+        if x is None or y is None:
+            continue
+
+        try:
+            # Avoid NaNs
             import math
-            if not (math.isnan(x) or math.isnan(y)):
-                trace_idx = ribbon_count + idx  # Offset by number of ribbons
-                current_fig['data'][trace_idx]['x'] = [x]
-                current_fig['data'][trace_idx]['y'] = [y]
-                updated += 1
+            if math.isnan(x) or math.isnan(y):
+                continue
+        except TypeError:
+            # Cast and re-check
+            try:
+                xf = float(x)
+                yf = float(y)
+                import math
+                if math.isnan(xf) or math.isnan(yf):
+                    continue
+                x, y = xf, yf
+            except Exception:
+                continue
 
-    if frame_idx % 20 == 0:  # Log every 20 frames
-        logger.info(f"  Updated {updated} cars at frame {frame_idx}")
+        trace_idx = ribbon_count + idx  # Cars after ribbons
+        try:
+            current_fig['data'][trace_idx]['x'] = [x]
+            current_fig['data'][trace_idx]['y'] = [y]
+        except Exception:
+            # Keep running even if an index is off
+            continue
 
     return current_fig
 
@@ -372,29 +409,55 @@ def update_frame_info(state, traj_data):
 
 # Server-side animation callback
 @app.callback(
-    Output('frame-slider', 'value'),
+    Output('store-state', 'data', allow_duplicate=True),
     Input('ticker', 'n_intervals'),
-    State('frame-slider', 'value'),
     State('store-state', 'data'),
     State('store-trajectories', 'data'),
     prevent_initial_call=True
 )
-def animate_frame(n_intervals, current_frame, state, traj_data):
-    """Advance frame when playing."""
-    logger.info(f"animate_frame: n_intervals={n_intervals}, current_frame={current_frame}, playing={state.get('playing')}")
-
+def animate_frame(_n, state, traj):
+    """Advance frame when playing - updates store only."""
+    if not isinstance(state, dict) or not isinstance(traj, dict):
+        return state
     if not state.get('playing', False):
-        logger.info("  Not playing, preventing update")
         raise dash.exceptions.PreventUpdate
 
-    # Advance frame from current slider position (source of truth)
-    new_frame = (current_frame if current_frame is not None else 0) + int(state.get('speed', 1))
+    frame_count = int(traj.get('frame_count', 0)) or 0
+    if frame_count <= 0:
+        return state
 
-    if new_frame >= traj_data['frame_count']:
-        new_frame = 0  # Loop back to start
+    speed = int(state.get('speed', 1)) or 1
+    new_frame = _wrap_frame(int(state.get('frame', 0)) + speed, frame_count)
+    return {**state, 'frame': new_frame}
 
-    logger.info(f"  Returning new_frame={new_frame}")
-    return new_frame
+
+@app.callback(
+    Output('frame-slider', 'value', allow_duplicate=True),
+    Input('store-state', 'data'),
+    prevent_initial_call=True
+)
+def sync_slider_from_store(state):
+    """Mirror store frame to slider (read-only display)."""
+    if not isinstance(state, dict):
+        return no_update
+    return int(state.get('frame', 0))
+
+
+@app.callback(
+    Output('store-state', 'data', allow_duplicate=True),
+    Input('frame-slider', 'value'),
+    State('store-state', 'data'),
+    prevent_initial_call=True
+)
+def user_seek_slider(slider_value, state):
+    """Handle user manual scrubbing - pause playback and seek to frame."""
+    if not isinstance(state, dict):
+        state = {'frame': 0, 'playing': False, 'speed': 1}
+    try:
+        f = int(slider_value)
+    except (TypeError, ValueError):
+        f = state.get('frame', 0)
+    return {**state, 'playing': False, 'frame': f}
 
 
 @app.callback(
